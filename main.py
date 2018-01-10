@@ -104,6 +104,9 @@ class Gui:
     def einde_beurt(self):
         self.updateGui()
 
+    def munten_verdeeld(self):
+        self.updateGui()
+
     def debug(self, *args):
         print args
 
@@ -122,6 +125,9 @@ class Gui:
 
         self.dobbelsteenLabel = Label(frame, text="[*dobbelsteen*]")
         self.dobbelsteenLabel.pack()
+
+        self.verdeelKnop = Button(frame, text="Verdeel munten", command=lambda: self.spel.verdeel_munten())
+        self.verdeelKnop.pack()
 
         self.eindeBeurtKnop = Button(frame, text="Einde beurt", command=lambda: self.spel.einde_beurt())
         self.eindeBeurtKnop.pack()
@@ -147,7 +153,7 @@ class Gui:
         self.dobbelKnop2['state']=NORMAL if self.spel.kan_dobbelen_met_2_stenen() else DISABLED
 
     def updateCenterCards(self):
-        self.centerCards.update(self.spel.aantal_worpen > 0 and not self.spel.heeft_gekocht, self.spel.huidige_speler())
+        self.centerCards.update(self.spel.aantal_worpen > 0 and not self.spel.kaart_gekocht, self.spel.huidige_speler())
 
     def updatePlayerFrames(self):
         for frameNum in range(len(self.playerFrames)):

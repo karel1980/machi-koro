@@ -9,7 +9,8 @@ class Spel:
         self.laatste_worp = None
         self.dobbelsteen = dobbelsteen
         self.aantal_worpen = 0
-        self.heeft_gekocht = False
+        self.kaart_gekocht = False
+        self.munten_verdeeld = False
         self.beschikbare_kaarten = [ Treinstation(), Treinstation(), Winkelcentrum(), Winkelcentrum() ]
 
         # dobbelen, opnieuw dobbelen, munten afgeven, munten krijgen, 
@@ -38,9 +39,27 @@ class Spel:
         self.laatste_worp = [ self.dobbelsteen.worp() for d in range(aantal_stenen) ]
         self.luisteraar.dobbelsteen_wijziging(self.laatste_worp)
 
+        if self.huidige_speler().aantal_toegestane_worpen_per_beurt() == 1:
+            self.verdeel_munten()
+
+    def verdeel_munten(self):
+        if self.munten_verdeeld:
+            raise Exception('munten_zijn_al_verdeeld_in_deze_ronde')
+
+        if self.aantal_worpen == 0:
+            raise Exception("munten_verdelen_kan_pas_na_werpen")
+
+        print "TODO: bereken nieuwe muntenverdeling"
+        self.munten_verdeeld = True
+        self.huidige_speler().munten += 5
+        self.luisteraar.munten_verdeeld()
+
     def koop_kaart(self, kaart):
         if kaart not in self.beschikbare_kaarten:
             raise Exception('deze_kaart_is_niet_beschikbaar')
+
+        if self.kaart_gekocht:
+            raise Exception("je_kan_maar_1_kaart_kopen_per_beurt")
 
         if kaart.kost > self.huidige_speler().munten:
             raise Exception('huidige_speler_heeft_niet_genoeg_munten')
@@ -48,15 +67,20 @@ class Spel:
         self.huidige_speler().munten -= kaart.kost
         self.huidige_speler().kaarten.append(kaart)
         self.beschikbare_kaarten.remove(kaart)
+        self.kaart_gekocht = True
         self.luisteraar.kaart_gekocht()
 
     def einde_beurt(self):
         if self.aantal_worpen == 0:
             raise Exception('einde_beurt_kan_pas_na_dobbelen')
+        if not self.munten_verdeeld:
+            raise Exception('de_munten_moeten_eerst_verdeeld_worden')
+
         self.huidige_speler_num += 1
         self.huidige_speler_num %= len(self.spelers)
         self.aantal_worpen = 0
-        self.heeft_gekocht = False
+        self.kaart_gekocht = False
+        self.munten_verdeeld = False
 
         self.luisteraar.einde_beurt()
 
