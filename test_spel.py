@@ -78,4 +78,3 @@ def test_spel_einde_beurt_enkel_na_dobbelen():
 
     assert_equal(str(ex.exception),'einde_beurt_kan_pas_na_dobbelen')
 
-
