@@ -1,0 +1,56 @@
+
+.card {
+	background: #eee;
+	width: 200px;
+	height: 250px;
+	display: inline-flex;
+	position: relative;
+	margin: 5px;
+	padding: 1em;
+}
+
+.card.card-yellow {
+	background: #ffc;
+}
+
+.card.card-blue {
+	background: lightblue;
+}
+
+.card.card-purple {
+	background: #fcf;
+}
+
+.card.card-green {
+	background: lightgreen;
+}
+
+.card.card-red {
+	background: #f66;
+}
+
+.card-top {
+}
+
+.card-bottom {
+	position: absolute;
+	bottom: 0px;
+}
+
+.roll {
+	text-align: center;
+}
+
+.label {
+	text-align: center;
+	margin-top: 1em;
+}
+
+.description {
+	margin-top: 5em;
+	text-align: center;
+}
+
+.cost {
+	margin-bottom: 1em;
+}
