@@ -15,11 +15,15 @@ import {Card} from './components/card';
 
 const Board = (props) => (
 	<div>
+		<button onClick={() => props.makeMove('roll', 1)}>Roll with 1 die</button>
+		<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
+		<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
+		
+		<h1>Dice</h1>
+		<div>{props.G.currentTurn.lastRoll}</div>
+
 		<h2>Deck</h2>
 		<div className="deck">{renderDeck(props.G.deck)}</div>
-
-		<h1>Last roll</h1>
-		<div>{props.G.currentTurn.lastRoll}</div>
 
 		<h2>Player 1</h2>
 		<div>{renderPlayerDeck(0, props.G.players[0].deck)}</div>

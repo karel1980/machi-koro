@@ -22,11 +22,13 @@ const PROD = !DEV;
 const app = Server({ games: [MachiKoro] });
 
 if (DEV) {
+/*
   app.use(
     KoaWebpack({
       config: WebpackConfig,
     })
   );
+*/
 }
 
 if (PROD) {
