@@ -2,7 +2,7 @@
   "name": "machi-koro",
   "version": "0.1.0",
   "private": true,
-  "main": "src/electron-starter.js",
+  "main": "src/electron/electron-starter.js",
   "dependencies": {
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-preset-stage-0": "^6.24.1",
@@ -14,14 +14,14 @@
     "react-scripts": "1.1.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development babel-watch --presets es2015 src/game/server.js",
+    "gameserver": "cross-env NODE_ENV=development babel-watch --presets es2015 src/game/server.js",
     "start": "nf start",
     "start-react": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "electron": "electron .",
-    "electron-wait-react": "node src/electron-wait-react.js"
+    "electron-wait-react": "node src/electron/electron-wait-react.js"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.1",
@@ -34,7 +34,10 @@
     "koa-helmet": "^3.3.0",
     "koa-static": "^4.0.2",
     "koa-webpack": "^2.0.3",
+    "lodash": "^4.17.4",
     "react-router-dom": "^4.2.2",
     "webpack-hot-middleware": "^2.21.0"
+  },
+  "jest": {
   }
 }

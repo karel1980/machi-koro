@@ -4,7 +4,7 @@ export const Cards = {
 		"name": "Pretpark",
 		"cost": 16,
 		"description": "Als je dubbel gooit, ben je direct nog een keer aan de beurt.",
-		"symbol": "tower",
+		"symbol": "tower"
 	},
 	"treinstation": {
 		"cost": 4,
@@ -27,7 +27,7 @@ export const Cards = {
 		"name": "Radiostation",
 		"description": "Je mag je dobbelstenen eenmaal per beurt opnieuw gooien.",
 		"roll": "0",
-		"symbol": "tower",
+		"symbol": "tower"
 	},
 	"graanveld": {
 		"symbol": "wheat",
@@ -35,7 +35,8 @@ export const Cards = {
 		"description": "Ontvang 1 munt van de bank ongeacht wiens beurt het is.",
 		"cost": 1,
 		"category": "blue",
-		"name": "Graanveld"
+		"name": "Graanveld",
+		"payout": 1
 	},
 	"veehouderij": {
 		"name": "Veehouderij",
@@ -43,7 +44,8 @@ export const Cards = {
 		"cost": 1,
 		"description": "Ontvang 1 munt van de bank ongeacht wiens beurt het is.",
 		"roll": "2",
-		"symbol": "cattle"
+		"symbol": "cattle",
+		"payout": 1
 	},
 	"bakkerij": {
 		"cost": 1,
@@ -59,7 +61,8 @@ export const Cards = {
 		"description": "Ontvang 1 munt van de bank als het jouw beurt is.",
 		"cost": 2,
 		"name": "Supermarkt",
-		"category": "green"
+		"category": "green",
+		"payout": 1
 	},
 	"groenteenfruitmarkt": {
 		"cost": 2,
@@ -67,7 +70,8 @@ export const Cards = {
 		"category": "green",
 		"description": "Ontvang 3 munten van de bank voor elke [graan] kaart die je bezit als het jouw beurt is.",
 		"roll": "11 - 12",
-		"symbol": "apple"
+		"symbol": "apple",
+		"payout": 3
 	},
 	"cafe": {
 		"description": "Ontvang 1 munt van iedere speler die dit getal gooit.",
@@ -76,6 +80,7 @@ export const Cards = {
 		"name": "Cafe",
 		"symbol": "coffee",
 		"roll": "3",
+		"payout": 1
 	},
 	"bos": {
 		"name": "Bos",
@@ -83,7 +88,8 @@ export const Cards = {
 		"cost": 3,
 		"description": "Ontvang 1 munt van de bank ongeacht wiens beurt het is.",
 		"roll": "5",
-		"symbol": "gear"
+		"symbol": "gear",
+		"payout": 1
 	},
 	"meubelfabriek": {
 		"cost": 3,
@@ -91,7 +97,8 @@ export const Cards = {
 		"name": "Meubelfabriek",
 		"description": "Ontvang 3 munten van de bank voor elke [gear] kaart die je bezit als het jouw beurt is.",
 		"roll": "8",
-		"symbol": "factory"
+		"symbol": "factory",
+		"payout": 3
 	},
 	"restaurant": {
 		"roll": "9 - 10",
@@ -99,7 +106,8 @@ export const Cards = {
 		"category": "red",
 		"name": "Restaurant",
 		"cost": 3,
-		"description": "Ontvang 2 munten van iedere speler die dit getal gooit."
+		"description": "Ontvang 2 munten van iedere speler die dit getal gooit.",
+		"payout": 2
 	},
 	"appelboomgaard": {
 		"symbol": "wheat",
@@ -107,7 +115,8 @@ export const Cards = {
 		"description": "Ontvang 3 munten van de bank ongeacht wiens beurt het is.",
 		"category": "blue",
 		"name": "Appelboomgaard",
-		"cost": 3
+		"cost": 3,
+		"payout": 3
 	},
 	"kaasfabriek": {
 		"description": "Ontvang 3 munten van de bank voor elke [koe] kaart die je bezit als het jouw beurt is.",
@@ -115,7 +124,8 @@ export const Cards = {
 		"category": "green",
 		"cost": 5,
 		"symbol": "factory",
-		"roll": "7"
+		"roll": "7",
+		"payout": 3
 	},
 	"stadion": {
 		"roll": "6",
@@ -123,7 +133,8 @@ export const Cards = {
 		"name": "Stadion",
 		"category": "purple",
 		"cost": 6,
-		"description": "Ontvang 2 munten van iedere speler als het jouw beurt is."
+		"description": "Ontvang 2 munten van iedere speler als het jouw beurt is.",
+		"payout": 2
 	},
 	"mijn": {
 		"symbol": "gear",
@@ -131,7 +142,8 @@ export const Cards = {
 		"description": "Ontvang 5 munten van de bank ongeacht wiens beurt het is.",
 		"cost": 6,
 		"name": "Mijn",
-		"category": "blue"
+		"category": "blue",
+		"payout": 5
 	},
 	"tvstation": {
 		"roll": "6",
@@ -139,7 +151,8 @@ export const Cards = {
 		"name": "Tv-Station",
 		"category": "purple",
 		"cost": 7,
-		"description": "Ontvang 6 munten van een speler naar keuze als het jouw beurt is."
+		"description": "Ontvang 6 munten van een speler naar keuze als het jouw beurt is.",
+		"payout": 6
 	},
 	"bedrijvencomplex": {
 		"cost": 8,

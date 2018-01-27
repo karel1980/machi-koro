@@ -1,5 +1,5 @@
 import React from 'react';
-import {Cards} from '../../cards';
+import {Cards} from '../game/cards';
 import './card.css';
 
 export const Card = (props) => renderCard(Cards[props.type], props.free, props.enabled);
