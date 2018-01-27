@@ -1,36 +1,35 @@
-import { newTurn, playRedCardsMove } from './machi-koro';
-import { rollMove } from './machi-koro';
-import { initialPlayer } from './machi-koro';
+import { playRollMove, playRedCardsMove, playBlueCardsMove } from './machi-koro';
+import { newTurn, initialPlayer } from './machi-koro';
 import { inspect } from 'util';
 
 describe('machi-koro', () => {
-	describe('rollMove', () => {
+	describe('playRollMove', () => {
 		it('increases numRolls on the current turn', () => {
 			let G = { currentTurn: { numRolls: 0 } };
 
-			expect(rollMove(G).currentTurn.numRolls).toEqual(1);
+			expect(playRollMove(G).currentTurn.numRolls).toEqual(1);
 		});
 
 		it('lets lastRoll', () => {
 			let G = { currentTurn: { numRolls: 0 } };
-			expect(rollMove(G, undefined, 0).currentTurn.lastRoll).toBeUndefined();
+			expect(playRollMove(G, undefined, 0).currentTurn.lastRoll).toBeUndefined();
 
 			G = { currentTurn: { numRolls: 0 } };
-			expect(rollMove(G, undefined, 1).currentTurn.lastRoll.length).toEqual(1);
+			expect(playRollMove(G, undefined, 1).currentTurn.lastRoll.length).toEqual(1);
 
 			G = { currentTurn: { numRolls: 0 } };
-			expect(rollMove(G, undefined, 2).currentTurn.lastRoll.length).toEqual(2);
+			expect(playRollMove(G, undefined, 2).currentTurn.lastRoll.length).toEqual(2);
 			
 			G = { currentTurn: { numRolls: 0 } };
-			expect(rollMove(G, undefined, 3).currentTurn.lastRoll).toBeUndefined();
+			expect(playRollMove(G, undefined, 3).currentTurn.lastRoll).toBeUndefined();
 		});
 
 		it('does not do anything already rolled', () => {
-			let G = rollMove({ currentTurn: { numRolls: 0 } }, undefined, 1);
+			let G = playRollMove({ currentTurn: { numRolls: 0 } }, undefined, 1);
 			let roll = G.currentTurn.lastRoll;
 
-			expect(rollMove(G, undefined, 0).currentTurn.lastRoll).toBe(roll);
-			expect(rollMove(G, undefined, 0).currentTurn.numRolls).toEqual(1);
+			expect(playRollMove(G, undefined, 0).currentTurn.lastRoll).toBe(roll);
+			expect(playRollMove(G, undefined, 0).currentTurn.numRolls).toEqual(1);
 		});
 	});
 
@@ -92,6 +91,20 @@ describe('machi-koro', () => {
 			expect(G.players[0].coins).toEqual(4);
 			expect(G.players[1].coins).toEqual(5);
 			expect(G.players[2].coins).toEqual(0);
+		});
+	});
+
+	describe('playBlueCardsMove', () => {
+		it('gives coins to all players if card value is rolled', () => {
+			let G = { currentTurn: { numRolls: 1, lastRoll: [10], hasPlayedRedCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+			G = giveCardToPlayer(G, 'appelboomgaard', 0);
+			G = giveCardToPlayer(G, 'appelboomgaard', 2);
+
+			G = playBlueCardsMove(G, undefined);
+
+			expect(G.players[0].coins).toEqual(6);
+			expect(G.players[1].coins).toEqual(3);
+			expect(G.players[2].coins).toEqual(6);
 		});
 
 	});

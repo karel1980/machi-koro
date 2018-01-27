@@ -58,10 +58,9 @@ const MachiKoro = Game({
 	}),
 
 	moves: {
-		roll: rollMove,
-
-		playRedCards: playRedCardsMove
-
+		roll: playRollMove,
+		playRedCards: playRedCardsMove,
+		playBlueCards: playBlueCardsMove
 	},
 
 	onTurnEnd: (G, ctx) => ({ ...G, currentTurn: newTurn()}),
@@ -76,7 +75,7 @@ const MachiKoro = Game({
 const doRoll = () => Math.floor(Math.random() * 6 + 1);
 
 // move implementations exported for testing
-export function rollMove(G, ctx, numDice) {
+export function playRollMove(G, ctx, numDice) {
 	if (G.currentTurn.numRolls > 0) {
 		return G; //rolled already
 	}
@@ -124,6 +123,25 @@ export function playRedCardsMove(G, ctx) {
 	}
 
 	let players = G.players.map((player, idx) => ({ ...player, coins: coins[idx] }));
+	return { ...G, players };
+}
+
+export function playBlueCardsMove(G, ctx) {
+	if (G.currentTurn.numRolls === 0) {
+		return G; //must roll first
+	}
+
+	if (!G.currentTurn.hasPlayedRedCards) {
+		return G;
+	}
+
+	let players = G.players.map(p => ({
+		...p,
+		coins: p.coins + p.deck.filter(matchingCategoryAndRoll('blue', G.currentTurn.lastRoll))
+			.map(playerCard => Cards[playerCard.card].payout)
+			.reduce((acc, current) => acc + current, 0)
+	}));
+
 	return { ...G, players };
 }
 

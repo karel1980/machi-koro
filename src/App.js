@@ -35,14 +35,22 @@ const Board = (props) => (
 
 const renderDeck = (deck) => (
 	Object.keys(deck).filter((key) => deck[key] > 0)
-		.map(key => (<Card key={key} type={key}></Card>))
-);
+		.map(key => (<Card key={key} type={key} onClick={() => onClickDeckCard(key)}/>)));
 
 const renderPlayerDeck = (playerId, playerDeck) => (
-	playerDeck.map((cas) => (<Card key={playerCardKey(playerId, cas.card)} type={cas.card} free={cas.free} enabled={cas.enabled}/>))
-);
+	playerDeck.map((cas) => (
+		<Card key={playerCardKey(playerId, cas.card)} type={cas.card}
+			  free={cas.free} enabled={cas.enabled} onClick={() => onClickPlayerCard(key, playerId)}/>)));
 
 const playerCardKey = (playerId, card) => "player-" + playerId + "-" + card;
+
+const onClickDeckCard = (key) => {
+	window.alert('clicked on deck card ' + key);
+};
+
+const onClickPlayerCard = (key, playerId) => {
+	window.alert('clicked on player card ' + key + ' of player ' + playerId);
+};
 
 const ClientApp = Client({
 	game: MachiKoro,
