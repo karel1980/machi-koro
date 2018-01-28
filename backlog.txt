@@ -8,6 +8,7 @@ GR I can roll dice
 GR Payout from red cards
 GR Play from blue cards
 GR Payout from blue cards (no 'increase [symbol]' modifiers)
+VI Show symbols on cards
 
 # todo
 
@@ -25,7 +26,6 @@ GR Purple cards (point to opponent who has to pay)
 
 ## Visuals
 
-VI Show symbols on cards
 VI Nicer dice
 VI Center deck: sort on roll value, then on price
 VI Player cards: sort on roll value, then on price
