@@ -17,7 +17,7 @@ const renderCard = (card, free, enabled) => (
 	</div>
 );
 
-const CardSymbol = (props) => (<img src={`/assets/${props.symbol}.png`}/>);
+const CardSymbol = (props) => (<img alt={props.symbol} src={`/assets/${props.symbol}.png`}/>);
 
 const rollDisplayString = value => value === undefined ? (<span>&nbsp;</span>) : value;
 

@@ -4,7 +4,9 @@ import {
 	playBlueCardsMove,
 	playGreenCardsMove,
 	playRedCardsMove,
-	playRollMove
+	playRollMove,
+	buyDeckCardMove,
+	INITIAL_DECK
 } from './machi-koro';
 
 describe('machi-koro', () => {
@@ -141,6 +143,33 @@ describe('machi-koro', () => {
 		});
 	});
 
+	describe('buyDeckCard', () => {
+		it('has a buyDeckCardMove', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedRedCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = buyDeckCardMove(G, { currentPlayer: 0 });
+			expect(G.players[0].coins).toEqual(3);
+		});
+
+		it('can buy cards', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = buyDeckCardMove(G, { currentPlayer: 0 }, 'bakkerij');
+
+			expect(G.players[0].deck.length).toEqual(7);
+			expect(G.players[0].coins).toEqual(2);
+		});
+
+		it('cannot cards which are too expensive', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = buyDeckCardMove(G, { currentPlayer: 0 }, 'treinstation');
+
+			expect(G.players[0].deck.length).toEqual(6);
+			expect(G.players[0].coins).toEqual(3);
+		});
+	});
+
 	const giveCardToPlayer = (G, cardType, playerId) => {
 		let players = [...G.players];
 		let player = players[playerId];
@@ -148,4 +177,3 @@ describe('machi-koro', () => {
 		return { ...G, players: players };
 	};
 });
-

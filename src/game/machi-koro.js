@@ -24,6 +24,24 @@ const initialPlayerDeck = () => [
 	{card: 'radiostation', enabled: false},
 ];
 
+export const INITIAL_DECK = {
+	graanveld: 6,
+	veehouderij: 6,
+	bakkerij: 6,
+	supermarkt: 6,
+	groenteenfruitmarkt: 6,
+	cafe: 6,
+	bos: 6,
+	meubelfabriek: 6,
+	restaurant: 6,
+	appelboomgaard: 6,
+	kaasfabriek: 6,
+	stadion: 4,
+	mijn: 6,
+	tvstation: 4,
+	bedrijvencomplex: 4
+};
+
 const newTurn = () => ({
 	numRolls: 0,
 	lastRoll: undefined
@@ -33,23 +51,7 @@ const MachiKoro = Game({
 	name: 'Machi Koro',
 
 	setup: () => ({
-		deck: {
-			graanveld: 6,
-			veehouderij: 6,
-			bakkerij: 6,
-			supermarkt: 6,
-			groenteenfruitmarkt: 6,
-			cafe: 6,
-			bos: 6,
-			meubelfabriek: 6,
-			restaurant: 6,
-			appelboomgaard: 6,
-			kaasfabriek: 6,
-			stadion: 4,
-			mijn: 6,
-			tvstation: 4,
-			bedrijvencomplex: 4
-		},
+		deck: INITIAL_DECK,
 		players: [
 			initialPlayer(),
 			initialPlayer()
@@ -61,7 +63,8 @@ const MachiKoro = Game({
 		roll: playRollMove,
 		playRedCards: playRedCardsMove,
 		playBlueCards: playBlueCardsMove,
-		playGreenCards: playGreenCardsMove
+		playGreenCards: playGreenCardsMove,
+		buyDeckCard: buyDeckCardMove,
 	},
 
 	flow: {
@@ -103,7 +106,6 @@ export function playRedCardsMove(G, ctx) {
 	if (G.currentTurn.hasPlayedRedCards) {
 		return G;
 	}
-	console.log(G);
 
 	// start at currentPlayer - 1, go down and stop before currentPlayer
 	let coins = G.players.map(p => p.coins);
@@ -176,7 +178,39 @@ export function playGreenCardsMove(G, ctx) {
 	});
 
 	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedGreenCards: true }, players };
-}
+};
+
+export function buyDeckCardMove(G, ctx, cardType) {
+	if (_.isNil(Cards[cardType])) {
+		return G;
+	}
+
+	if (!G.currentTurn.hasPlayedBlueCards || !G.currentTurn.hasPlayedGreenCards) {
+		return G;
+	}
+
+
+	const deck = { ...G.deck };
+	const players = [ ...G.players ];
+	const current = { ...G.players[ctx.currentPlayer] };
+	players[ctx.currentPlayer] = current;
+
+	if (_.isNil(G.deck[cardType]) || G.deck[cardType] <= 0) {
+		return G;
+	}
+
+	const card = Cards[cardType];
+	if (card.cost > current.coins) {
+		return G;
+	}
+
+	current.coins -= card.cost;
+	deck[cardType] -= 1;
+
+	current.deck.push({ card: cardType });
+
+	return { ...G, hasBoughtCard: true, deck, players };
+};
 
 const matchingCategoryAndRoll = (category, roll) =>
 	({card}) => Cards[card].category === category && matchesCardRoll(Cards[card], roll);
@@ -187,7 +221,7 @@ const matchesCardRoll = (card, roll) => {
 	let range = cardRange(card);
 
 	return rolled >= range.min && rolled <= range.max;
-}
+};
 
 const cardRange = (card) => {
 	let rollSpec = card.roll;
@@ -199,6 +233,6 @@ const cardRange = (card) => {
 	}
 
 	return { min: Number(rollSpec), max: Number(rollSpec) };
-}
+};
 
 export default MachiKoro;

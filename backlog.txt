@@ -11,13 +11,14 @@ GR Payout from blue cards (no 'increase [symbol]' modifiers)
 VI Show symbols on cards
 GR Green cards (collect x when rolled)
 GR Green cards (increment value of other cards)
+GR I can buy cards from the deck
 
 # todo
 
 ## Game rules
 
-GR I can buy cards from the deck
 GR I can buy yellow cards
+GR purple and yellow cards can be bought only once
 GR Yellow card: throw with 2 dice
 GR Yellow card: throw again
 GR implement 'increment all [symbol] cards'
