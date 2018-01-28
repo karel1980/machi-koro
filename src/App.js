@@ -18,6 +18,7 @@ const Board = (props) => (
 		<button onClick={() => props.makeMove('roll', 1)}>Roll with 1 die</button>
 		<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
 		<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
+		<button onClick={() => props.makeMove('playBlueCards')}>Play blue cards</button>
 		
 		<h1>Dice</h1>
 		<div>{props.G.currentTurn.lastRoll}</div>
@@ -38,9 +39,11 @@ const renderDeck = (deck) => (
 		.map(key => (<Card key={key} type={key} onClick={() => onClickDeckCard(key)}/>)));
 
 const renderPlayerDeck = (playerId, playerDeck) => (
-	playerDeck.map((cas) => (
-		<Card key={playerCardKey(playerId, cas.card)} type={cas.card}
-			  free={cas.free} enabled={cas.enabled} onClick={() => onClickPlayerCard(key, playerId)}/>)));
+	playerDeck.map((cas) => {
+		let key = playerCardKey(playerId, cas.card);
+		return <Card key={key} type={cas.card}
+			  free={cas.free} enabled={cas.enabled} onClick={() => onClickPlayerCard(key, playerId)}/>
+	}));
 
 const playerCardKey = (playerId, card) => "player-" + playerId + "-" + card;
 

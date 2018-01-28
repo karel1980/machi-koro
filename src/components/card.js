@@ -8,7 +8,7 @@ const renderCard = (card, free, enabled) => (
 	<div className={cardClassNames(card, enabled)}>
 		<div className="card-top">
 			<div className="roll">{rollDisplayString(card.roll)}</div>
-			<div className="label">{card.name}</div>
+			<div className="label"><CardSymbol symbol={card.symbol}/> {card.name}</div>
 			<div className="description">{card.description}</div>
 		</div>
 		<div className="card-bottom">
@@ -16,6 +16,8 @@ const renderCard = (card, free, enabled) => (
 		</div>
 	</div>
 );
+
+const CardSymbol = (props) => (<img src={`/assets/${props.symbol}.png`}/>);
 
 const rollDisplayString = value => value === undefined ? (<span>&nbsp;</span>) : value;
 

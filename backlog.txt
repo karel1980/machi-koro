@@ -1,29 +1,35 @@
+GR = Game rules
+VI = Visuals
+
 # done
 
-The game loads and I see cards
-I can roll dice
-Payout from red cards
+GR The game loads and I see cards
+GR I can roll dice
+GR Payout from red cards
+GR Play from blue cards
+GR Payout from blue cards (no 'increase [symbol]' modifiers)
 
 # todo
 
 ## Game rules
 
-I can buy cards from the deck
-I can buy yellow cards
-Yellow card: throw with 2 dice
-Yellow card: throw again
-implement 'increment all [symbol] cards'
-Payout from blue cards (simply collect)
-Payout from green cards (simply collect)
-Purple cards (swap card with opponent)
-Purple cards (point to opponent who has to pay)
+GR Green cards (collect x when rolled)
+GR Green cards (increment value of other cards)
+GR I can buy cards from the deck
+GR I can buy yellow cards
+GR Yellow card: throw with 2 dice
+GR Yellow card: throw again
+GR implement 'increment all [symbol] cards'
+GR Purple cards (swap card with opponent)
+GR Purple cards (point to opponent who has to pay)
 
 ## Visuals
 
-Nicer dice
-Center deck: sort on roll value, then on price
-Player cards: sort on roll value, then on price
-Guide user through different phases in turn
-Cards smaller, zoom for details
-Group cards & render multiple cards with dropshadow
-Deck on the right, players on the left in 2 rows
+VI Show symbols on cards
+VI Nicer dice
+VI Center deck: sort on roll value, then on price
+VI Player cards: sort on roll value, then on price
+VI Guide user through different phases in turn
+VI Cards smaller, zoom for details
+VI Group cards & render multiple cards with dropshadow
+VI Deck on the right, players on the left in 2 rows
