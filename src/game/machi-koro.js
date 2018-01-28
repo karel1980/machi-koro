@@ -60,12 +60,15 @@ const MachiKoro = Game({
 	moves: {
 		roll: playRollMove,
 		playRedCards: playRedCardsMove,
-		playBlueCards: playBlueCardsMove
+		playBlueCards: playBlueCardsMove,
+		playGreenCards: playGreenCardsMove
 	},
 
-	onTurnEnd: (G, ctx) => ({ ...G, currentTurn: newTurn()}),
-
 	flow: {
+		onTurnEnd: (G, ctx) => {
+			return ({...G, currentTurn: newTurn()})
+		},
+
 		endGameIf: (G, ctx) => {
 			//if (a player has all orange class cards) return that player;
 		},
@@ -100,6 +103,7 @@ export function playRedCardsMove(G, ctx) {
 	if (G.currentTurn.hasPlayedRedCards) {
 		return G;
 	}
+	console.log(G);
 
 	// start at currentPlayer - 1, go down and stop before currentPlayer
 	let coins = G.players.map(p => p.coins);
@@ -123,34 +127,62 @@ export function playRedCardsMove(G, ctx) {
 	}
 
 	let players = G.players.map((player, idx) => ({ ...player, coins: coins[idx] }));
-	return { ...G, players };
+	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedRedCards: true }, players };
 }
 
 export function playBlueCardsMove(G, ctx) {
-	if (G.currentTurn.numRolls === 0) {
-		return G; //must roll first
+	if (!G.currentTurn.hasPlayedRedCards) {
+		return G; // must play red cards first
 	}
 
-	if (!G.currentTurn.hasPlayedRedCards) {
-		return G;
+	if (G.currentTurn.hasPlayedBlueCards) {
+		return G; // can be played only once
 	}
 
 	let players = G.players.map(p => ({
 		...p,
 		coins: p.coins + p.deck.filter(matchingCategoryAndRoll('blue', G.currentTurn.lastRoll))
 			.map(playerCard => Cards[playerCard.card].payout)
-			.reduce((acc, current) => acc + current, 0)
+			.reduce(sumReducer, 0)
 	}));
 
-	return { ...G, players };
+	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedBlueCards: true }, players };
 }
 
-const matchingCategoryAndRoll = (category, roll) => {
-	return ({card}) => Cards[card].category === category && matchesCardRoll(Cards[card], roll)
+const sumReducer = (acc, current) => acc + current;
+
+export function playGreenCardsMove(G, ctx) {
+	if (!G.currentTurn.hasPlayedRedCards) {
+		return G; // must play red cards first
+	}
+
+	if (G.currentTurn.hasPlayedGreenCards) {
+		return G; // can be played only once
+	}
+
+	let current = { ...G.players[ctx.currentPlayer] };
+	let players = [ ...G.players ];
+	players[ctx.currentPlayer] = current;
+
+	let activeGreenCards = current.deck.filter(matchingCategoryAndRoll('green', G.currentTurn.lastRoll))
+		.map(playerCard => Cards[playerCard.card]);
+
+	let simpleGreenCards = activeGreenCards.filter((card) => _.isNil(card.payoutFor));
+	current.coins += simpleGreenCards.map(card => card.payout).reduce(sumReducer, 0);
+
+	let modifierCards = activeGreenCards.filter((card) => !_.isNil(card.payoutFor));
+	modifierCards.forEach((modifier) => {
+		current.coins += modifier.payout * current.deck.filter((card) => Cards[card.card].symbol === modifier.payoutFor).length;
+	});
+
+	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedGreenCards: true }, players };
 }
+
+const matchingCategoryAndRoll = (category, roll) =>
+	({card}) => Cards[card].category === category && matchesCardRoll(Cards[card], roll);
 
 const matchesCardRoll = (card, roll) => {
-	let rolled = roll.reduce((acc, current) => acc + current);
+	let rolled = roll.reduce(sumReducer, 0);
 
 	let range = cardRange(card);
 

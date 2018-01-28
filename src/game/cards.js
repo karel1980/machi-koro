@@ -53,7 +53,8 @@ export const Cards = {
 		"name": "Bakkerij",
 		"description": "Ontvang 1 munt van de bank als het jouw beurt is.",
 		"roll": "2 - 3",
-		"symbol": "house"
+		"symbol": "house",
+		"payout": 1
 	},
 	"supermarkt": {
 		"symbol": "house",
@@ -71,7 +72,8 @@ export const Cards = {
 		"description": "Ontvang 3 munten van de bank voor elke [graan] kaart die je bezit als het jouw beurt is.",
 		"roll": "11 - 12",
 		"symbol": "apple",
-		"payout": 3
+		"payout": 3,
+		"payoutFor": "wheat"
 	},
 	"cafe": {
 		"description": "Ontvang 1 munt van iedere speler die dit getal gooit.",
@@ -98,7 +100,8 @@ export const Cards = {
 		"description": "Ontvang 3 munten van de bank voor elke [gear] kaart die je bezit als het jouw beurt is.",
 		"roll": "8",
 		"symbol": "factory",
-		"payout": 3
+		"payout": 3,
+		"payoutFor": "gear"
 	},
 	"restaurant": {
 		"roll": "9 - 10",
@@ -107,7 +110,7 @@ export const Cards = {
 		"name": "Restaurant",
 		"cost": 3,
 		"description": "Ontvang 2 munten van iedere speler die dit getal gooit.",
-		"payout": 2
+		"payout": 2,
 	},
 	"appelboomgaard": {
 		"symbol": "wheat",
@@ -125,7 +128,8 @@ export const Cards = {
 		"cost": 5,
 		"symbol": "factory",
 		"roll": "7",
-		"payout": 3
+		"payout": 3,
+		"payoutFor": "cattle"
 	},
 	"stadion": {
 		"roll": "6",

@@ -1,6 +1,11 @@
-import { playRollMove, playRedCardsMove, playBlueCardsMove } from './machi-koro';
-import { newTurn, initialPlayer } from './machi-koro';
-import { inspect } from 'util';
+import {
+	initialPlayer,
+	newTurn,
+	playBlueCardsMove,
+	playGreenCardsMove,
+	playRedCardsMove,
+	playRollMove
+} from './machi-koro';
 
 describe('machi-koro', () => {
 	describe('playRollMove', () => {
@@ -106,7 +111,34 @@ describe('machi-koro', () => {
 			expect(G.players[1].coins).toEqual(3);
 			expect(G.players[2].coins).toEqual(6);
 		});
+	});
 
+	describe('playGreenCardsMove', () => {
+		it('gives coins to current player for simple green cards', () => {
+			let G = { currentTurn: { numRolls: 1, lastRoll: [2], hasPlayedRedCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = playGreenCardsMove(G, { currentPlayer: 0 });
+
+			expect(G.players[0].coins).toEqual(4);
+			expect(G.players[1].coins).toEqual(3);
+			expect(G.players[2].coins).toEqual(3);
+		});
+
+		it('gives coins for "modifier" green cards', () => {
+			let G = { currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedRedCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+			G = giveCardToPlayer(G, 'graanveld', 0);
+			G = giveCardToPlayer(G, 'groenteenfruitmarkt', 0);
+			G = giveCardToPlayer(G, 'graanveld', 1);
+			G = giveCardToPlayer(G, 'groenteenfruitmarkt', 1);
+			G = giveCardToPlayer(G, 'graanveld', 2);
+			G = giveCardToPlayer(G, 'groenteenfruitmarkt', 2);
+
+			G = playGreenCardsMove(G, { currentPlayer: 0 });
+
+			expect(G.players[0].coins).toEqual(9);
+			expect(G.players[1].coins).toEqual(3);
+			expect(G.players[2].coins).toEqual(3);
+		});
 	});
 
 	const giveCardToPlayer = (G, cardType, playerId) => {

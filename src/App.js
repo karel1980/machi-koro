@@ -23,15 +23,25 @@ const Board = (props) => (
 		<h1>Dice</h1>
 		<div>{props.G.currentTurn.lastRoll}</div>
 
-		<h2>Deck</h2>
-		<div className="deck">{renderDeck(props.G.deck)}</div>
+		<Deck deck={props.G.deck}/>
+		<Player name="0" player={props.G.players[0]}/>
+		<Player name="1" player={props.G.players[1]}/>
 
-		<h2>Player 1</h2>
-		<div>{renderPlayerDeck(0, props.G.players[0].deck)}</div>
-
-		<h2>Player 1</h2>
-		<div>{renderPlayerDeck(1, props.G.players[1].deck)}</div>
 	</div>
+)
+
+const Deck = (props) => (
+	<div>
+		<h2>Deck</h2>
+		<div className="deck">{renderDeck(props.deck)}</div>
+	</div>
+);
+
+const Player = (props) => (
+		<div>
+			<h2>Player {props.name} (Coins: {props.player.coins})</h2>
+			<div>{renderPlayerDeck(1, props.player.deck)}</div>
+		</div>
 );
 
 const renderDeck = (deck) => (
