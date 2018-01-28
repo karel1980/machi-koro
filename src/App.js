@@ -19,7 +19,8 @@ const Board = (props) => (
 		<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
 		<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
 		<button onClick={() => props.makeMove('playBlueCards')}>Play blue cards</button>
-		
+		<button onClick={() => props.makeMove('playGreenCards')}>Play green cards</button>
+
 		<h1>Dice</h1>
 		<div>{props.G.currentTurn.lastRoll}</div>
 
