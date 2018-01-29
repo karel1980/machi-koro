@@ -6,6 +6,7 @@ import {
 	playRedCardsMove,
 	playRollMove,
 	buyDeckCardMove,
+	buyYellowCardMove,
 	INITIAL_DECK
 } from './machi-koro';
 
@@ -170,10 +171,40 @@ describe('machi-koro', () => {
 		});
 	});
 
+	describe('buyYellowCardMove', () => {
+		it('can buy a yellow card', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+			G = setPlayerCoins(G, 0, 5);
+
+			G = buyYellowCardMove(G, { currentPlayer: 0 }, 'treinstation');
+
+			expect(G.players[0].deck.length).toEqual(6);
+			expect(G.players[0].deck.filter((pc => pc.card == 'treinstation'))[0].enabled).toBe(true);
+			expect(G.players[0].coins).toEqual(1);
+		});
+
+		it('can not buy yellow card if player does not have enough coins', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = buyYellowCardMove(G, { currentPlayer: 0 }, 'treinstation');
+
+			expect(G.players[0].deck.length).toEqual(6);
+			expect(G.players[0].deck.filter((pc => pc.card == 'treinstation'))[0].enabled).toBe(false);
+			expect(G.players[0].coins).toEqual(3);
+		});
+	});
+
 	const giveCardToPlayer = (G, cardType, playerId) => {
 		let players = [...G.players];
 		let player = players[playerId];
 		players[playerId] = { ...player, deck: [ ...player.deck, { card: cardType } ] };
+		return { ...G, players: players };
+	};
+
+	const setPlayerCoins = (G, playerId, coins) => {
+		let players = [...G.players];
+		let player = players[playerId];
+		players[playerId] = { ...player, coins: coins };
 		return { ...G, players: players };
 	};
 });

@@ -9,9 +9,10 @@
 import {Game} from 'boardgame.io/core';
 import {Cards} from './cards.js';
 import _ from 'lodash';
+import update from 'immutability-helper';
 
 export const initialPlayer = () => ({
-	coins: 3,
+	coins: 55,
 	deck: initialPlayerDeck()
 });
 
@@ -56,7 +57,7 @@ const MachiKoro = Game({
 			initialPlayer(),
 			initialPlayer()
 		],
-	  	currentTurn: newTurn()
+		currentTurn: newTurn()
 	}),
 
 	moves: {
@@ -65,6 +66,7 @@ const MachiKoro = Game({
 		playBlueCards: playBlueCardsMove,
 		playGreenCards: playGreenCardsMove,
 		buyDeckCard: buyDeckCardMove,
+		buyYellowCard: buyYellowCardMove,
 	},
 
 	flow: {
@@ -95,7 +97,7 @@ export function playRollMove(G, ctx, numDice) {
 		roll.push(doRoll());
 	}
 
-	return { ...G, currentTurn: { ...G.currentTurn, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll }};
+	return {...G, currentTurn: {...G.currentTurn, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll}};
 };
 
 export function playRedCardsMove(G, ctx) {
@@ -109,7 +111,7 @@ export function playRedCardsMove(G, ctx) {
 
 	// start at currentPlayer - 1, go down and stop before currentPlayer
 	let coins = G.players.map(p => p.coins);
-	for (let i = 0; i < G.players.length - 1; i++ ) {
+	for (let i = 0; i < G.players.length - 1; i++) {
 		if (coins[ctx.currentPlayer] <= 0) {
 			break;
 		}
@@ -128,8 +130,8 @@ export function playRedCardsMove(G, ctx) {
 		}
 	}
 
-	let players = G.players.map((player, idx) => ({ ...player, coins: coins[idx] }));
-	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedRedCards: true }, players };
+	let players = G.players.map((player, idx) => ({...player, coins: coins[idx]}));
+	return {...G, currentTurn: {...G.currentTurn, hasPlayedRedCards: true}, players};
 }
 
 export function playBlueCardsMove(G, ctx) {
@@ -148,7 +150,7 @@ export function playBlueCardsMove(G, ctx) {
 			.reduce(sumReducer, 0)
 	}));
 
-	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedBlueCards: true }, players };
+	return {...G, currentTurn: {...G.currentTurn, hasPlayedBlueCards: true}, players};
 }
 
 const sumReducer = (acc, current) => acc + current;
@@ -162,8 +164,8 @@ export function playGreenCardsMove(G, ctx) {
 		return G; // can be played only once
 	}
 
-	let current = { ...G.players[ctx.currentPlayer] };
-	let players = [ ...G.players ];
+	let current = {...G.players[ctx.currentPlayer]};
+	let players = [...G.players];
 	players[ctx.currentPlayer] = current;
 
 	let activeGreenCards = current.deck.filter(matchingCategoryAndRoll('green', G.currentTurn.lastRoll))
@@ -177,8 +179,8 @@ export function playGreenCardsMove(G, ctx) {
 		current.coins += modifier.payout * current.deck.filter((card) => Cards[card.card].symbol === modifier.payoutFor).length;
 	});
 
-	return { ...G, currentTurn: { ...G.currentTurn, hasPlayedGreenCards: true }, players };
-};
+	return {...G, currentTurn: {...G.currentTurn, hasPlayedGreenCards: true}, players};
+}
 
 export function buyDeckCardMove(G, ctx, cardType) {
 	if (_.isNil(Cards[cardType])) {
@@ -189,10 +191,13 @@ export function buyDeckCardMove(G, ctx, cardType) {
 		return G;
 	}
 
+	if (G.currentTurn.hasBoughtCard) {
+		return G;
+	}
 
-	const deck = { ...G.deck };
-	const players = [ ...G.players ];
-	const current = { ...G.players[ctx.currentPlayer] };
+	const deck = {...G.deck};
+	const players = [...G.players];
+	const current = {...G.players[ctx.currentPlayer]};
 	players[ctx.currentPlayer] = current;
 
 	if (_.isNil(G.deck[cardType]) || G.deck[cardType] <= 0) {
@@ -207,10 +212,61 @@ export function buyDeckCardMove(G, ctx, cardType) {
 	current.coins -= card.cost;
 	deck[cardType] -= 1;
 
-	current.deck.push({ card: cardType });
+	current.deck.push({card: cardType});
 
-	return { ...G, hasBoughtCard: true, deck, players };
-};
+	return {...G, currentTurn: {...G.currentTurn, hasBoughtCard: true}, deck, players};
+}
+
+export function buyYellowCardMove(G, ctx, cardType) {
+	if (_.isNil(Cards[cardType])) {
+		return G;
+	}
+
+	if (Cards[cardType].category !== 'yellow') {
+		return G;
+	}
+
+	if (!G.currentTurn.hasPlayedBlueCards || !G.currentTurn.hasPlayedGreenCards) {
+		return G;
+	}
+
+	if (G.currentTurn.hasBoughtCard) {
+		return G;
+	}
+
+	if (G.players[ctx.currentPlayer].coins < Cards[cardType].cost) {
+		return G;
+	}
+
+	let player = G.players[ctx.currentPlayer];
+	let deck = player.deck;
+	let cardIdx = deck.findIndex(playerCardWithType(cardType));
+	let playerCard = deck[cardIdx];
+
+	if (playerCard.enabled) {
+		return G;
+	}
+
+	return {
+		...G,
+		players: update(G.players, {
+			$splice: [[ctx.currentPlayer, 1, {
+				...player,
+				deck: update(player.deck, {
+					$splice: [[cardIdx, 1, {
+						...playerCard, enabled: true
+					}]]
+				}),
+				coins: player.coins - Cards[cardType].cost
+			}]]
+		}),
+		currentTurn: {...G.currentTurn, hasBoughtCard: true}
+	};
+}
+
+function playerCardWithType(cardType) {
+	return (playerCard => playerCard.card === cardType);
+}
 
 const matchingCategoryAndRoll = (category, roll) =>
 	({card}) => Cards[card].category === category && matchesCardRoll(Cards[card], roll);
@@ -229,10 +285,10 @@ const cardRange = (card) => {
 	if (_.isNaN(Number(rollSpec))) {
 		let match = rollSpec.match(/(\d+) *- *(\d+)/);
 
-		return { min: Number(match[1]), max: Number(match[2]) };
+		return {min: Number(match[1]), max: Number(match[2])};
 	}
 
-	return { min: Number(rollSpec), max: Number(rollSpec) };
+	return {min: Number(rollSpec), max: Number(rollSpec)};
 };
 
 export default MachiKoro;
