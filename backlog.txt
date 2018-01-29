@@ -36,3 +36,4 @@ VI Guide user through different phases in turn
 VI Cards smaller, zoom for details
 VI Group cards & render multiple cards with dropshadow
 VI Deck on the right, players on the left in 2 rows
+VI On hover, indicate card can be bought, only enable menu if can be bought
