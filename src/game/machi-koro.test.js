@@ -5,8 +5,7 @@ import {
 	playGreenCardsMove,
 	playRedCardsMove,
 	playRollMove,
-	buyDeckCardMove,
-	buyYellowCardMove,
+	buyCardMove,
 	INITIAL_DECK
 } from './machi-koro';
 
@@ -144,18 +143,18 @@ describe('machi-koro', () => {
 		});
 	});
 
-	describe('buyDeckCard', () => {
-		it('has a buyDeckCardMove', () => {
+	describe('buyCardMove', () => {
+		it('has a buyCardMove', () => {
 			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedRedCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
 
-			G = buyDeckCardMove(G, { currentPlayer: 0 });
+			G = buyCardMove(G, { currentPlayer: 0 });
 			expect(G.players[0].coins).toEqual(3);
 		});
 
 		it('can buy cards', () => {
 			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
 
-			G = buyDeckCardMove(G, { currentPlayer: 0 }, 'bakkerij');
+			G = buyCardMove(G, { currentPlayer: 0 }, 'bakkerij');
 
 			expect(G.players[0].deck.length).toEqual(7);
 			expect(G.players[0].coins).toEqual(2);
@@ -164,19 +163,17 @@ describe('machi-koro', () => {
 		it('cannot cards which are too expensive', () => {
 			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
 
-			G = buyDeckCardMove(G, { currentPlayer: 0 }, 'treinstation');
+			G = buyCardMove(G, { currentPlayer: 0 }, 'treinstation');
 
 			expect(G.players[0].deck.length).toEqual(6);
 			expect(G.players[0].coins).toEqual(3);
 		});
-	});
 
-	describe('buyYellowCardMove', () => {
 		it('can buy a yellow card', () => {
 			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
 			G = setPlayerCoins(G, 0, 5);
 
-			G = buyYellowCardMove(G, { currentPlayer: 0 }, 'treinstation');
+			G = buyCardMove(G, { currentPlayer: 0 }, 'treinstation');
 
 			expect(G.players[0].deck.length).toEqual(6);
 			expect(G.players[0].deck.filter((pc => pc.card == 'treinstation'))[0].enabled).toBe(true);
@@ -186,11 +183,43 @@ describe('machi-koro', () => {
 		it('can not buy yellow card if player does not have enough coins', () => {
 			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
 
-			G = buyYellowCardMove(G, { currentPlayer: 0 }, 'treinstation');
+			G = buyCardMove(G, { currentPlayer: 0 }, 'treinstation');
 
 			expect(G.players[0].deck.length).toEqual(6);
 			expect(G.players[0].deck.filter((pc => pc.card == 'treinstation'))[0].enabled).toBe(false);
 			expect(G.players[0].coins).toEqual(3);
+		});
+
+		it('does not allow buying card which has "maxOwnCount: 1 a second time', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = enableCard(G, 'treinstation', 0);
+			G = setPlayerCoins(G, 0, 5);
+
+			expect(G.players[0].coins).toEqual(5);
+			expect(countCard(G.players[0].deck, 'treinstation')).toBe(1);
+			expect(getPlayerCard(G.players[0].deck, 'treinstation').enabled).toBe(true);
+
+			G = buyCardMove(G, { currentPlayer: 0 }, 'treinstation');
+
+			expect(G.players[0].coins).toEqual(5);
+			expect(countCard(G.players[0].deck, 'treinstation')).toBe(1);
+			expect(getPlayerCard(G.players[0].deck, 'treinstation').enabled).toBe(true);
+		});
+
+		fit('does not allow buying a purple card which has "maxOwnCount: 1 a second time', () => {
+			let G = { deck: INITIAL_DECK, currentTurn: { numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true }, players: [initialPlayer(), initialPlayer(), initialPlayer()] };
+
+			G = giveCardToPlayer(G, 'stadion', 0);
+			G = setPlayerCoins(G, 0, 10);
+
+			expect(G.players[0].coins).toEqual(10);
+			expect(countCard(G.players[0].deck, 'stadion')).toBe(1);
+
+			G = buyCardMove(G, { currentPlayer: 0 }, 'stadion');
+
+			expect(G.players[0].coins).toEqual(10);
+			expect(countCard(G.players[0].deck, 'stadion')).toBe(1);
 		});
 	});
 
@@ -201,10 +230,30 @@ describe('machi-koro', () => {
 		return { ...G, players: players };
 	};
 
+	const enableCard = (G, cardType, playerId) => {
+		let players = [...G.players];
+		let player = players[playerId];
+
+		let cardIdx = player.deck.findIndex((cas) => cas.card === cardType);
+		let deck = [ ...player.deck ];
+		deck[cardIdx] = { ...deck[cardIdx], enabled: true };
+		players[playerId] = { ...player, deck: deck };
+		return { ...G, players: players };
+	};
+
 	const setPlayerCoins = (G, playerId, coins) => {
 		let players = [...G.players];
 		let player = players[playerId];
 		players[playerId] = { ...player, coins: coins };
 		return { ...G, players: players };
 	};
+
+	const countCard = (playerDeck, cardType) => {
+		return playerDeck.filter((cas) => cas.card === cardType).length;
+	};
+
+	const getPlayerCard = (playerDeck, cardType) => {
+		return playerDeck.filter((cas) => cas.card === cardType)[0];
+	};
+
 });

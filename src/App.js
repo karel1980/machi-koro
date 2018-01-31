@@ -13,23 +13,30 @@ import {Client} from 'boardgame.io/client';
 import MachiKoro from './game/machi-koro';
 import {Card} from './components/card';
 
-const Board = (props) => (
-	<div>
-		<button onClick={() => props.makeMove('roll', 1)}>Roll with 1 die</button>
-		<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
-		<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
-		<button onClick={() => props.makeMove('playBlueCards')}>Play blue cards</button>
-		<button onClick={() => props.makeMove('playGreenCards')}>Play green cards</button>
+const Board = (props) => {
+	let buyCard = isBuyingAllowed(props.G.currentTurn) ? ((cardType) => props.moves.buyCard(cardType)) : null;
+	return (
+		<div>
+			<button onClick={() => props.makeMove('roll', 1)}>Roll with 1 die</button>
+			<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
+			<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
+			<button onClick={() => props.makeMove('playBlueCards')}>Play blue cards</button>
+			<button onClick={() => props.makeMove('playGreenCards')}>Play green cards</button>
 
-		<h1>Dice</h1>
-		<div>{props.G.currentTurn.lastRoll}</div>
+			<h1>Dice</h1>
+			<div>{props.G.currentTurn.lastRoll}</div>
 
-		<Deck deck={props.G.deck} onBuy={(cardType) => props.moves.buyDeckCard(cardType)}/>
-		<Player name="0" player={props.G.players[0]} onBuy={(cardType) => props.moves.buyYellowCard(cardType)}/>
-		<Player name="1" player={props.G.players[1]} onBuy={(cardType) => props.moves.buyYellowCard(cardType)}/>
+			<Deck deck={props.G.deck} onBuy={buyCard}/>
+			<Player name="0" player={props.G.players[0]} onBuy={props.ctx.currentPlayer === "0" && buyCard}/>
+			<Player name="1" player={props.G.players[1]} onBuy={props.ctx.currentPlayer === "1" && buyCard}/>
 
-	</div>
-)
+		</div>
+	);
+};
+
+const isBuyingAllowed = (currentTurn) => {
+	return currentTurn.hasPlayedBlueCards && currentTurn.hasPlayedGreenCards && !currentTurn.hasBoughtCard;
+};
 
 const Deck = (props) => (
 	<div>
@@ -45,14 +52,29 @@ const Player = (props) => (
 	</div>
 );
 
+const createDeckCardMenu = (cardType, onBuy) => {
+	return createCardMenu(cardType, onBuy);
+};
+
+const createPlayerCardMenu = (cardType, onBuy) => {
+	return createCardMenu(cardType, onBuy);
+};
+
+const createCardMenu = (cardType, onBuy) => {
+	let menuItems = null;
+	if (onBuy) {
+		menuItems = [
+			<li key="buy" onClick={() => onBuy(cardType)}>Buy this card</li>,
+			<li key="nothing">Do nothing</li>
+		];
+	}
+	return menuItems;
+};
+
 const renderDeck = (deck, onBuy) => {
 	return Object.keys(deck).filter((key) => deck[key] > 0)
 		.map(key => {
-			let menuItems = [
-				<li key="buy" onClick={() => onBuy(key)}>Buy this card</li>,
-				<li key="nothing">Do nothing</li>
-			];
-
+			let menuItems = createDeckCardMenu(key, onBuy);
 			return (<Card key={key} type={key} menuItems={menuItems}/>)
 		});
 }
@@ -60,10 +82,7 @@ const renderDeck = (deck, onBuy) => {
 const renderPlayerDeck = (playerId, playerDeck, onBuy) => (
 	playerDeck.map((cas, idx) => {
 		let key = playerCardKey(playerId, cas.card, idx);
-		let menuItems = [
-			<li key="buy" onClick={() => onBuy(cas.card)}>Buy this card</li>,
-			<li key="nothing">Do nothing</li>
-		];
+		let menuItems = createPlayerCardMenu(cas.card, onBuy);
 		return <Card key={key} type={cas.card}
 					 free={cas.free} enabled={cas.enabled} menuItems={menuItems}/>
 	}));

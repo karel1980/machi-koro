@@ -2,16 +2,17 @@ import React from 'react';
 import './card.css';
 import {DropdownMenu} from 'react-dd-menu';
 import {Cards} from '../game/cards';
+import * as _ from 'lodash';
 
 export class Card extends React.Component {
 
 	state = {isMenuOpen: false};
 
-	toggle = () => {
+	toggle() {
 		this.setState({isMenuOpen: !this.state.isMenuOpen});
-	}
+	};
 
-	close = () => {
+	close() {
 		this.setState({isMenuOpen: false});
 	};
 
@@ -19,15 +20,23 @@ export class Card extends React.Component {
 		let {type, free, enabled, menuItems} = this.props;
 		let card = Cards[type];
 
-		let menuOptions = {
-			isOpen: this.state.isMenuOpen,
-			toggle: '',
-			close: this.close,
-			align: 'center'
-		};
+		let menu = <span>&nbsp;</span>;
+
+		if (!_.isNil(this.props.menuItems)) {
+			let menuOptions = {
+				isOpen: this.state.isMenuOpen,
+				toggle: '',
+				close: () => this.close(),
+				align: 'center'
+			};
+
+			menu = (<DropdownMenu {...menuOptions}>
+				{menuItems}
+			</DropdownMenu>);
+		}
 
 		return (
-			<div className={cardClassNames(card, enabled)} onClick={() => this.toggle()}>
+			<div className={cardClassNames(card, enabled)} onClick={() => this.props.menuItems && this.toggle()}>
 				<div className="card-top">
 					<div className="roll">{rollDisplayString(card.roll)}</div>
 					<div className="label">
@@ -35,9 +44,7 @@ export class Card extends React.Component {
 						{card.name}
 					</div>
 					<div style={{margin: 'auto', textAlign: 'center'}}>
-						<DropdownMenu {...menuOptions}>
-							{menuItems}
-						</DropdownMenu>
+						{menu}
 					</div>
 					<div className="description">{card.description}</div>
 				</div>

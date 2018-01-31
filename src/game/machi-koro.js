@@ -12,7 +12,7 @@ import _ from 'lodash';
 import update from 'immutability-helper';
 
 export const initialPlayer = () => ({
-	coins: 55,
+	coins: 3,
 	deck: initialPlayerDeck()
 });
 
@@ -65,8 +65,7 @@ const MachiKoro = Game({
 		playRedCards: playRedCardsMove,
 		playBlueCards: playBlueCardsMove,
 		playGreenCards: playGreenCardsMove,
-		buyDeckCard: buyDeckCardMove,
-		buyYellowCard: buyYellowCardMove,
+		buyCard: buyCardMove
 	},
 
 	flow: {
@@ -182,7 +181,7 @@ export function playGreenCardsMove(G, ctx) {
 	return {...G, currentTurn: {...G.currentTurn, hasPlayedGreenCards: true}, players};
 }
 
-export function buyDeckCardMove(G, ctx, cardType) {
+export function buyCardMove(G, ctx, cardType) {
 	if (_.isNil(Cards[cardType])) {
 		return G;
 	}
@@ -195,6 +194,18 @@ export function buyDeckCardMove(G, ctx, cardType) {
 		return G;
 	}
 
+	if (Cards[cardType].cost > G.players[ctx.currentPlayer].coins) {
+		return G;
+	}
+
+	if (Cards[cardType].category === 'yellow') {
+		return buyYellowCardMove(G, ctx, cardType);
+	}
+
+	return buyDeckCardMove(G, ctx, cardType);
+}
+
+function buyDeckCardMove(G, ctx, cardType) {
 	const deck = {...G.deck};
 	const players = [...G.players];
 	const current = {...G.players[ctx.currentPlayer]};
@@ -209,6 +220,10 @@ export function buyDeckCardMove(G, ctx, cardType) {
 		return G;
 	}
 
+	if (!_.isNil(card.maxOwnCount) && current.deck.filter((cas) => cas.card === cardType).length >= card.maxOwnCount) {
+		return G;
+	}
+
 	current.coins -= card.cost;
 	deck[cardType] -= 1;
 
@@ -217,27 +232,7 @@ export function buyDeckCardMove(G, ctx, cardType) {
 	return {...G, currentTurn: {...G.currentTurn, hasBoughtCard: true}, deck, players};
 }
 
-export function buyYellowCardMove(G, ctx, cardType) {
-	if (_.isNil(Cards[cardType])) {
-		return G;
-	}
-
-	if (Cards[cardType].category !== 'yellow') {
-		return G;
-	}
-
-	if (!G.currentTurn.hasPlayedBlueCards || !G.currentTurn.hasPlayedGreenCards) {
-		return G;
-	}
-
-	if (G.currentTurn.hasBoughtCard) {
-		return G;
-	}
-
-	if (G.players[ctx.currentPlayer].coins < Cards[cardType].cost) {
-		return G;
-	}
-
+function buyYellowCardMove(G, ctx, cardType) {
 	let player = G.players[ctx.currentPlayer];
 	let deck = player.deck;
 	let cardIdx = deck.findIndex(playerCardWithType(cardType));

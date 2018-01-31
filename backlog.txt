@@ -15,12 +15,12 @@ GR I can buy cards from the deck
 GR I can buy yellow cards
 GR yellow cards can be bought only once
 GR I can buy purple cards
+GR purple cards can be bought only once
 
 # todo
 
 ## Game rules
 
-GR purple cards can be bought only once
 GR Yellow card: throw with 2 dice
 GR Yellow card: throw again
 GR implement 'increment all [symbol] cards'
@@ -37,3 +37,4 @@ VI Cards smaller, zoom for details
 VI Group cards & render multiple cards with dropshadow
 VI Deck on the right, players on the left in 2 rows
 VI On hover, indicate card can be bought, only enable menu if can be bought
+VI Alert player card cannot be bought if not enough coins left

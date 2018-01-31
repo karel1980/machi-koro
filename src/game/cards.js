@@ -4,7 +4,8 @@ export const Cards = {
 		"name": "Pretpark",
 		"cost": 16,
 		"description": "Als je dubbel gooit, ben je direct nog een keer aan de beurt.",
-		"symbol": "tower"
+		"symbol": "tower",
+		"maxOwnCount": 1
 	},
 	"treinstation": {
 		"cost": 4,
@@ -12,6 +13,7 @@ export const Cards = {
 		"category": "yellow",
 		"description": "Je mag met twee dobbelstenen gooien.",
 		"symbol": "tower",
+		"maxOwnCount": 1
 	},
 	"winkelcentrum": {
 		"roll": "0",
@@ -19,7 +21,8 @@ export const Cards = {
 		"cost": 10,
 		"name": "Winkelcentrum",
 		"category": "yellow",
-		"description": "Verhoog het aantal munten dat je voor je [koffie] en [huisje] kaarten krijgt met 1."
+		"description": "Verhoog het aantal munten dat je voor je [koffie] en [huisje] kaarten krijgt met 1.",
+		"maxOwnCount": 1
 	},
 	"radiostation": {
 		"cost": 22,
@@ -27,7 +30,8 @@ export const Cards = {
 		"name": "Radiostation",
 		"description": "Je mag je dobbelstenen eenmaal per beurt opnieuw gooien.",
 		"roll": "0",
-		"symbol": "tower"
+		"symbol": "tower",
+		"maxOwnCount": 1
 	},
 	"graanveld": {
 		"symbol": "wheat",
@@ -138,7 +142,8 @@ export const Cards = {
 		"category": "purple",
 		"cost": 6,
 		"description": "Ontvang 2 munten van iedere speler als het jouw beurt is.",
-		"payout": 2
+		"payout": 2,
+		"maxOwnCount": 1
 	},
 	"mijn": {
 		"symbol": "gear",
@@ -156,7 +161,8 @@ export const Cards = {
 		"category": "purple",
 		"cost": 7,
 		"description": "Ontvang 6 munten van een speler naar keuze als het jouw beurt is.",
-		"payout": 6
+		"payout": 6,
+		"maxOwnCount": 1
 	},
 	"bedrijvencomplex": {
 		"cost": 8,
@@ -164,6 +170,7 @@ export const Cards = {
 		"name": "Bedrijvencomplex",
 		"description": "Je mag een kaart met een speler naar keuze ruilen (geen [tower] kaart) als het jouw beurt is.",
 		"roll": "6",
-		"symbol": "tower"
+		"symbol": "tower",
+		"maxOwnCount": 1
 	}
 };
