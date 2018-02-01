@@ -91,12 +91,20 @@ export function playRollMove(G, ctx, numDice) {
 		return G; //incorrect number of dice
 	}
 
-	var roll = [doRoll()];
+	if (numDice === 2 && !playerCanRollWith2Dice(G.players[ctx.currentPlayer])) {
+		return G;
+	}
+
+	let roll = [doRoll()];
 	if (numDice === 2) {
 		roll.push(doRoll());
 	}
 
 	return {...G, currentTurn: {...G.currentTurn, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll}};
+}
+
+const playerCanRollWith2Dice = (player) => {
+	return player.deck.filter((cas) => cas.enabled && Cards[cas.card].canRollWith2Dice).length > 0;
 };
 
 export function playRedCardsMove(G, ctx) {

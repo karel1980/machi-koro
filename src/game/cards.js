@@ -13,7 +13,8 @@ export const Cards = {
 		"category": "yellow",
 		"description": "Je mag met twee dobbelstenen gooien.",
 		"symbol": "tower",
-		"maxOwnCount": 1
+		"maxOwnCount": 1,
+		"canRollWith2Dice": true
 	},
 	"winkelcentrum": {
 		"roll": "0",
