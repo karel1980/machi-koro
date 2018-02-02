@@ -6,7 +6,8 @@ export const Cards = {
 		"cost": 16,
 		"description": "Als je dubbel gooit, ben je direct nog een keer aan de beurt.",
 		"symbol": "tower",
-		"maxOwnCount": 1
+		"maxOwnCount": 1,
+		"allowAnotherTurnOnDoubleThrow": true
 	},
 	"treinstation": {
 		"cost": 4,

@@ -35,12 +35,14 @@ const Palette = (props) => {
 	let playBlue = !control ? undefined : <button onClick={() => props.moves.playBlueCards()}>Play blue cards</button>;
 	let playGreen = !control ? undefined :
 		<button onClick={() => props.moves.playGreenCards()}>Play green cards</button>;
+	let restartTurn = !control ? undefined : <button onClick={() => props.moves.restartTurn()}>Play another turn</button>;
 	let endTurn = !control ? undefined : <button onClick={() => props.events.endTurn()}>End my turn</button>;
 
 	let title = spectator || !control ? 'Player ' + props.ctx.currentPlayer :
 		control && !props.isActive ? 'Your turn' : 'Player ' + props.ctx.currentPlayer;
 
-	title += ` (Coins: ${props.G.players[props.ctx.currentPlayer].coins})`;
+	let currentPlayer = props.G.players[props.ctx.currentPlayer];
+	title += ` (Coins: ${currentPlayer.coins})`;
 
 	let rolled = props.G.currentTurn.numRolls === 0 ? '' :
 		<span>...rolled <Dice values={props.G.currentTurn.lastRoll}/></span>;
@@ -53,7 +55,8 @@ const Palette = (props) => {
 			{props.G.currentTurn.numRolls > 0 && !props.G.currentTurn.hasPlayedRedCards ? playRed : undefined}
 			{props.G.currentTurn.hasPlayedRedCards && !props.G.currentTurn.hasPlayedBlueCards ? playBlue : undefined}
 			{props.G.currentTurn.hasPlayedRedCards && !props.G.currentTurn.hasPlayedGreenCards ? playGreen : undefined}
-			{props.G.currentTurn.hasPlayedBlueCards && props.G.currentTurn.hasPlayedGreenCards ? endTurn : undefined}
+			{props.G.currentTurn.hasPlayedGreenCards && props.G.currentTurn.hasPlayedBlueCards && props.G.currentTurn.canRestart ? restartTurn : undefined}
+			{props.G.currentTurn.hasPlayedBlueCards && props.G.currentTurn.hasPlayedGreenCards && !props.G.currentTurn.canRestart ? endTurn : undefined}
 		</div>
 	</div>);
 };
@@ -106,7 +109,7 @@ const Player = (props) => {
 			<div>{
 				player.deck.map((playerCard, idx) => {
 					let key = playerCardKey(props.name, playerCard.card, idx);
-					let menuItems = createPlayerCardMenu(playerCard, player, props.onBuy);
+					let menuItems = createPlayerCardMenu(playerCard, player, props.name === props.ctx.currentPlayer && props.onBuy);
 					return <Card key={key} type={playerCard.card}
 								 free={playerCard.free} enabled={playerCard.enabled} menuItems={menuItems}/>
 				})

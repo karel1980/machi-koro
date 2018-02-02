@@ -17,11 +17,6 @@ body {
 	z-index: 50
 }
 
-/*.card:hover {*/
-	/*animation: grow-medium 500ms;*/
-	/*animation-fill-mode: both;*/
-/*}*/
-
 .card-symbol {
 	vertical-align: middle;
 }
@@ -47,33 +42,6 @@ body {
 @keyframes shrink {
 	0% {
 		transform: scale(1.05);
-		box-shadow: 0px 0px 50px #000000;
-		z-index: 10;
-	}
-	100% {
-		transform: scale(1.0);
-		box-shadow: 0px 0px 0px #000000;
-		z-index: 1;
-	}
-}
-
-@keyframes grow-medium {
-	0% {
-		transform: scale(1.0);
-		box-shadow: 0px 0px 0px #000000;
-		z-index: 1;
-	}
-	100% {
-		transform: scale(2.0);
-		box-shadow: 0px 0px 50px #000000;
-		z-index: 10;
-	}
-}
-
-
-@keyframes shrink-medium {
-	0% {
-		transform: scale(2.0);
 		box-shadow: 0px 0px 50px #000000;
 		z-index: 10;
 	}

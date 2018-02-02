@@ -68,6 +68,7 @@ const MachiKoro = Game({
 		playGreenCards: playGreenCardsMove,
 		buyCard: buyCardMove,
 		swapCards: playSwapCardsMove,
+		restartTurn: restartTurnMove
 	},
 
 	flow: {
@@ -107,7 +108,11 @@ export function playRollMove(G, ctx, numDice) {
 		}
 	}
 
-	return {...G, currentTurn: {...G.currentTurn, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll, questions: []}};
+	let player = G.players[ctx.currentPlayer];
+	let canRestart = !_.isNil(player.deck.find(playerCard => playerCard.enabled !== false && Cards[playerCard.card].allowAnotherTurnOnDoubleThrow))
+			&& roll.length === 2 && roll[0] === roll[1];
+
+	return {...G, currentTurn: {...G.currentTurn, canRestart: canRestart, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll }};
 }
 
 // exported for testing
@@ -416,6 +421,14 @@ export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
 	players[Number(opponentId)] = opponent;
 
 	return {...G, players, currentTurn: {...G.currentTurn, hasCollectedFromOpponent: true}}
+}
+
+export function restartTurnMove(G, ctx) {
+	if (G.currentTurn.hasPlayedGreenCards && G.currentTurn.hasPlayedBlueCards && G.currentTurn.canRestart) {
+		return { ...G, currentTurn: newTurn() };
+	}
+
+	return G;
 }
 
 const playerCardRollMatcher = (roll) => {

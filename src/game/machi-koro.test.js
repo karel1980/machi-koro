@@ -8,7 +8,8 @@ import {
 	playRedCardsMove,
 	playRollMove,
 	playSwapCardsMove,
-	collectCoinsFromOpponentMove
+	collectCoinsFromOpponentMove,
+	restartTurnMove
 } from './machi-koro';
 
 describe('machi-koro', () => {
@@ -228,7 +229,7 @@ describe('machi-koro', () => {
 					currentTurn: {numRolls: 1, lastRoll: [6], hasPlayedBlueCards: true, hasPlayedGreenCards: true},
 					players: [initialPlayer(), initialPlayer(), initialPlayer()]
 				};
-				let ctx = { currentPlayer : 0 };
+				let ctx = {currentPlayer: 0};
 				G = giveCardToPlayer(G, 'bedrijvencomplex', 0);
 				G = playSwapCardsMove(G, ctx, 1, 'bakkerij', 'graanveld');
 
@@ -359,10 +360,59 @@ describe('machi-koro', () => {
 			G = setPlayerCoins(G, 0, 100);
 			G = setPlayerCoins(G, 1, 100);
 
-			G = collectCoinsFromOpponentMove(G, { currentPlayer: 0 }, 1);
+			G = collectCoinsFromOpponentMove(G, {currentPlayer: 0}, 1);
 
 			expect(G.players[0].coins).toEqual(106);
 			expect(G.players[1].coins).toEqual(94);
+		});
+	});
+
+	describe('restartTurnMove', () => {
+		it('sets the restart flag when rolling', () => {
+			let G = {
+				deck: INITIAL_DECK,
+				currentTurn: {numRolls: 0},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()],
+				forceRoll: [3, 3]
+			};
+
+			G = enableCard(G, 'pretpark', 0);
+			G = playRollMove(G, {currentPlayer: 0}, 1);
+
+			expect(G.currentTurn.canRestart).toBe(true);
+		});
+
+		it('allows player to restart turn if restart is allowed', () => {
+			let G = {
+				deck: INITIAL_DECK,
+				currentTurn: {
+					numRolls: 1,
+					lastRoll: [3, 3],
+					hasPlayedGreenCards: true,
+					hasPlayedBlueCards: true,
+					canRestart: true
+				},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()]
+			};
+
+			G = enableCard(G, 'pretpark', 0);
+			G = restartTurnMove(G, {currentPlayer: 0});
+
+			expect(G.currentTurn.numRolls).toBe(0);
+			expect(G.currentTurn.lastRoll).toBeUndefined();
+		});
+
+		it('does not allow restarting turn if player does not have the appropriate card', () => {
+			let G = {
+				deck: INITIAL_DECK,
+				currentTurn: {numRolls: 1, lastRoll: [3, 3], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()]
+			};
+
+			G = restartTurnMove(G, {currentPlayer: 0});
+
+			expect(G.currentTurn.numRolls).toBe(1);
+			expect(G.currentTurn.lastRoll).toEqual([3, 3]);
 		});
 	});
 
