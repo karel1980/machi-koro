@@ -47,5 +47,11 @@
     "sass-loader": "^6.0.6",
     "webpack-hot-middleware": "^2.21.0"
   },
-  "jest": {}
+  "jest": {},
+  "proxy": {
+    "/socket.io": {
+      "target": "ws://localhost:5000",
+      "ws": true
+    }
+  }
 }

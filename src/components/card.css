@@ -1,14 +1,29 @@
 
+body {
+	font-family: arial;
+}
+
 .card {
 	background: #eee;
-	width: 200px;
-	height: 250px;
+	width: 120px;
+	height: 200px;
 	display: inline-flex;
 	position: relative;
 	margin: 5px;
 	padding: 1em;
 	animation: shrink 500ms;
 	animation-fill-mode: forwards;
+	font-size: 0.5em;
+	z-index: 50
+}
+
+/*.card:hover {*/
+	/*animation: grow-medium 500ms;*/
+	/*animation-fill-mode: both;*/
+/*}*/
+
+.card-symbol {
+	vertical-align: middle;
 }
 
 .card.highlight {
@@ -42,12 +57,39 @@
 	}
 }
 
+@keyframes grow-medium {
+	0% {
+		transform: scale(1.0);
+		box-shadow: 0px 0px 0px #000000;
+		z-index: 1;
+	}
+	100% {
+		transform: scale(2.0);
+		box-shadow: 0px 0px 50px #000000;
+		z-index: 10;
+	}
+}
+
+
+@keyframes shrink-medium {
+	0% {
+		transform: scale(2.0);
+		box-shadow: 0px 0px 50px #000000;
+		z-index: 10;
+	}
+	100% {
+		transform: scale(1.0);
+		box-shadow: 0px 0px 0px #000000;
+		z-index: 1;
+	}
+}
+
 .card.card-yellow {
 	background: #ffc;
 }
 
 .card.card-blue {
-	/*background: lightblue;*/
+	background: lightblue;
 }
 
 .card.card-purple {
@@ -77,6 +119,7 @@
 .label {
 	text-align: center;
 	margin-top: 1em;
+	vertical-align: middle;
 }
 
 .description {

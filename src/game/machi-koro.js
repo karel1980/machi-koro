@@ -194,12 +194,12 @@ const addPlayerCard = (playerDeck, cardType) => {
 	return playerDeck.concat([{card: cardType}]);
 };
 
-const allowedNumberOfRolls = (player) => {
+export const allowedNumberOfRolls = (player) => {
 	return player.deck.filter((cas) => (cas.enabled && Cards[cas.card].reRoll))
 		.length > 0 ? 2 : 1;
 };
 
-const playerCanRollWith2Dice = (player) => {
+export const playerCanRollWith2Dice = (player) => {
 	return player.deck.filter((cas) => cas.enabled && Cards[cas.card].canRollWith2Dice).length > 0;
 };
 

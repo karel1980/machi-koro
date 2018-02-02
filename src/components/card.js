@@ -6,27 +6,18 @@ import * as _ from 'lodash';
 
 export class Card extends React.Component {
 
-	state = {isMenuOpen: false};
-
-	toggle() {
-		this.setState({isMenuOpen: !this.state.isMenuOpen});
-	};
-
-	close() {
-		this.setState({isMenuOpen: false});
-	};
-
 	render() {
 		let {type, free, enabled, menuItems} = this.props;
 		let card = Cards[type];
 
 		let menu = <span>&nbsp;</span>;
 
-		if (!_.isNil(this.props.menuItems)) {
+		let hasMenu = !_.isNil(this.props.menuItems);
+		if (hasMenu) {
 			let menuOptions = {
-				isOpen: this.state.isMenuOpen,
+				isOpen: true,
 				toggle: '',
-				close: () => this.close(),
+				close: () => {},
 				align: 'center'
 			};
 
@@ -36,7 +27,7 @@ export class Card extends React.Component {
 		}
 
 		return (
-			<div className={cardClassNames(card, enabled, this.state.isMenuOpen)} onClick={() => this.props.menuItems && this.toggle()}>
+			<div className={cardClassNames(card, enabled, hasMenu)}>
 				<div className="card-top">
 					<div className="roll">{rollDisplayString(card.roll)}</div>
 					<div className="label">
@@ -56,7 +47,7 @@ export class Card extends React.Component {
 	}
 }
 
-const CardSymbol = (props) => (<img alt={props.symbol} src={`/assets/${props.symbol}.png`}/>);
+const CardSymbol = (props) => (<img className="card-symbol" alt={props.symbol} src={`/assets/${props.symbol}.png`}/>);
 
 const rollDisplayString = value => value === undefined ? (<span>&nbsp;</span>) : value;
 

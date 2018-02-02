@@ -28,7 +28,6 @@ const MultiClient = Client({
 
 const Hello = () => <div>
 	<h2>Play alone</h2>
-	<img src={'./assets/house.png'} />
 	<li><a href="#/game/single">Forever alone</a></li>
 
 	<h2>Play test game</h2>

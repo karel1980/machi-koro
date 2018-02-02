@@ -1,80 +1,136 @@
-
 import React from 'react';
 
 import {Card} from './card';
+import './board.css';
+import * as _ from 'lodash';
+import {allowedNumberOfRolls, playerCanRollWith2Dice} from "../game/machi-koro";
+import {Cards} from '../game/cards';
 
-export const Board = (props) => {
-	let buyCard = isBuyingAllowed(props.G.currentTurn) ? ((cardType) => props.moves.buyCard(cardType)) : null;
-	return (
+export class Board extends React.Component {
+
+	render() {
+		let props = this.props;
+		let buyingCardsIsAllowed = hasControl(props) && props.G.currentTurn.hasPlayedGreenCards && props.G.currentTurn.hasPlayedBlueCards && !props.G.currentTurn.hasBoughtCard;
+		let buyCard = buyingCardsIsAllowed ? (cardType) => props.moves.buyCard(cardType) : null;
+		return (
+			<div>
+				<Palette {...props}/>
+
+				<Deck deck={props.G.deck} currentPlayer={props.G.players[props.ctx.currentPlayer]} onBuy={buyCard}/>
+				<Player name="0" G={props.G} ctx={props.ctx} onBuy={buyCard}/>
+				<Player name="1" G={props.G} ctx={props.ctx} onBuy={buyCard}/>
+			</div>
+		);
+	}
+};
+
+const Palette = (props) => {
+
+	let control = hasControl(props);
+	let spectator = isSpectator(props);
+
+	let roll1 = !control ? undefined : <button onClick={() => props.moves.roll(1)}>Roll with 1 die</button>;
+	let roll2 = !control ? undefined : <button onClick={() => props.moves.roll(2)}>Roll with 2 dice</button>;
+	let playRed = !control ? undefined : <button onClick={() => props.moves.playRedCards()}>Play red cards</button>;
+	let playBlue = !control ? undefined : <button onClick={() => props.moves.playBlueCards()}>Play blue cards</button>;
+	let playGreen = !control ? undefined :
+		<button onClick={() => props.moves.playGreenCards()}>Play green cards</button>;
+	let endTurn = !control ? undefined : <button onClick={() => props.events.endTurn()}>End my turn</button>;
+
+	let title = spectator || !control ? 'Player ' + props.ctx.currentPlayer :
+		control && !props.isActive ? 'Your turn' : 'Player ' + props.ctx.currentPlayer;
+
+	title += ` (Coins: ${props.G.players[props.ctx.currentPlayer].coins})`;
+
+	let rolled = props.G.currentTurn.numRolls === 0 ? '' :
+		<span>...rolled <Dice values={props.G.currentTurn.lastRoll}/></span>;
+
+	return (<div className="palette">
+		<h3>{title} {rolled}</h3>
 		<div>
-			<button onClick={() => props.makeMove('roll', 1)}>Roll with 1 die</button>
-			<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
-			<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
-			<button onClick={() => props.makeMove('playBlueCards')}>Play blue cards</button>
-			<button onClick={() => props.makeMove('playGreenCards')}>Play green cards</button>
+			{showRollButton(props) ? roll1 : undefined}
+			{showRoll2Button(props) ? roll2 : undefined}
+			{props.G.currentTurn.numRolls > 0 && !props.G.currentTurn.hasPlayedRedCards ? playRed : undefined}
+			{props.G.currentTurn.hasPlayedRedCards && !props.G.currentTurn.hasPlayedBlueCards ? playBlue : undefined}
+			{props.G.currentTurn.hasPlayedRedCards && !props.G.currentTurn.hasPlayedGreenCards ? playGreen : undefined}
+			{props.G.currentTurn.hasPlayedBlueCards && props.G.currentTurn.hasPlayedGreenCards ? endTurn : undefined}
+		</div>
+	</div>);
+};
 
-			<h1>Dice</h1>
-			<div>{props.G.currentTurn.lastRoll}</div>
+const Dice = (props) => {
+	return props.values.map((value, idx) => <span key={`dice-${idx}`}
+												  style={{marginLeft: '1em', marginRight: '1em'}}>{value}</span>)
+};
 
-			<Deck deck={props.G.deck} onBuy={buyCard}/>
-			<Player name="0" player={props.G.players[0]} onBuy={props.ctx.currentPlayer === "0" && buyCard}/>
-			<Player name="1" player={props.G.players[1]} onBuy={props.ctx.currentPlayer === "1" && buyCard}/>
+const hasControl = (props) => {
+	return props.isActive || (props.playerID === props.ctx.currentPlayer);
+};
 
+const isSpectator = (props) => {
+	let playerID = Number(props.playerID);
+	return _.isNaN(playerID) || playerID < 0 || playerID >= props.ctx.numPlayers;
+};
+
+const showRollButton = (props) => {
+	return hasControl(props) && playerCanRoll(props.G.currentTurn.numRolls, props.G.players[props.ctx.currentPlayer], props.G.currentTurn.hasPlayedRedCards);
+};
+
+const showRoll2Button = (props) => {
+	return showRollButton(props) && playerCanRollWith2Dice(props.G.players[props.ctx.currentPlayer]);
+};
+
+const playerCanRoll = (currentNumRolls, player, redCardsPlayed) => {
+	return !redCardsPlayed && (currentNumRolls < allowedNumberOfRolls(player));
+};
+
+const Deck = (props) => (
+	<div style={{textAlign: 'center'}}>
+		<h2>Deck</h2>
+		<div
+			className="deck">{
+			Object.keys(props.deck).filter((key) => props.deck[key] > 0)
+				.map(key => {
+					let menuItems = createDeckCardMenu(key, props.currentPlayer, props.currentPlayer.coins >= Cards[key].cost && props.onBuy);
+					return (<Card key={key} type={key} menuItems={menuItems}/>)
+				})
+		}</div>
+	</div>
+);
+
+const Player = (props) => {
+	let player = props.G.players[props.name];
+	return (
+		<div style={{textAlign: 'center'}}>
+			<h2>Player {props.name} (Coins: {player.coins})</h2>
+			<div>{
+				player.deck.map((playerCard, idx) => {
+					let key = playerCardKey(props.name, playerCard.card, idx);
+					let menuItems = createPlayerCardMenu(playerCard, player, props.onBuy);
+					return <Card key={key} type={playerCard.card}
+								 free={playerCard.free} enabled={playerCard.enabled} menuItems={menuItems}/>
+				})
+			}</div>
 		</div>
 	);
 };
 
-const isBuyingAllowed = (currentTurn) => {
-	return currentTurn.hasPlayedBlueCards && currentTurn.hasPlayedGreenCards && !currentTurn.hasBoughtCard;
+const createDeckCardMenu = (cardType, player, onBuy) => {
+	return createCardMenu(cardType, player, onBuy);
 };
 
-const Deck = (props) => (
-	<div>
-		<h2>Deck</h2>
-		<div className="deck">{renderDeck(props.deck, props.onBuy)}</div>
-	</div>
-);
-
-const Player = (props) => (
-	<div>
-		<h2>Player {props.name} (Coins: {props.player.coins})</h2>
-		<div>{renderPlayerDeck(1, props.player.deck, props.onBuy)}</div>
-	</div>
-);
-
-const createDeckCardMenu = (cardType, onBuy) => {
-	return createCardMenu(cardType, onBuy);
+const createPlayerCardMenu = (playerCard, player, onBuy) => {
+	return createCardMenu(playerCard.card, player, playerCard.enabled === false && player.coins >= Cards[playerCard.card].cost && onBuy);
 };
 
-const createPlayerCardMenu = (cardType, onBuy) => {
-	return createCardMenu(cardType, onBuy);
-};
-
-const createCardMenu = (cardType, onBuy) => {
+const createCardMenu = (cardType, player, onBuy) => {
 	let menuItems = null;
 	if (onBuy) {
 		menuItems = [
 			<li key="buy" onClick={() => onBuy(cardType)}>Buy this card</li>,
-			<li key="nothing">Do nothing</li>
 		];
 	}
 	return menuItems;
 };
-
-const renderDeck = (deck, onBuy) => {
-	return Object.keys(deck).filter((key) => deck[key] > 0)
-		.map(key => {
-			let menuItems = createDeckCardMenu(key, onBuy);
-			return (<Card key={key} type={key} menuItems={menuItems}/>)
-		});
-}
-
-const renderPlayerDeck = (playerId, playerDeck, onBuy) => (
-	playerDeck.map((cas, idx) => {
-		let key = playerCardKey(playerId, cas.card, idx);
-		let menuItems = createPlayerCardMenu(cas.card, onBuy);
-		return <Card key={key} type={cas.card}
-					 free={cas.free} enabled={cas.enabled} menuItems={menuItems}/>
-	}));
 
 const playerCardKey = (playerId, card, cardIdx) => "player-" + playerId + "-" + card + "-" + cardIdx;

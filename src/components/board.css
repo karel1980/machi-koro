@@ -1,0 +1,13 @@
+.palette {
+	background: #eee;
+	padding: 2em;
+	width: 400px;
+	height: 300px;
+	position: fixed;
+	right: 1em;
+	z-index: 1000;
+}
+
+palette.collapsed .palette-content {
+	display: none;
+}
