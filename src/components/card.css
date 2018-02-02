@@ -7,6 +7,39 @@
 	position: relative;
 	margin: 5px;
 	padding: 1em;
+	animation: shrink 500ms;
+	animation-fill-mode: forwards;
+}
+
+.card.highlight {
+	animation: grow 1000ms;
+	animation-fill-mode: both;
+}
+
+@keyframes grow {
+	0% {
+		transform: scale(1.0);
+		box-shadow: 0px 0px 0px #000000;
+		z-index: 1;
+	}
+	100% {
+		transform: scale(1.05);
+		box-shadow: 0px 0px 50px #000000;
+		z-index: 10;
+	}
+}
+
+@keyframes shrink {
+	0% {
+		transform: scale(1.05);
+		box-shadow: 0px 0px 50px #000000;
+		z-index: 10;
+	}
+	100% {
+		transform: scale(1.0);
+		box-shadow: 0px 0px 0px #000000;
+		z-index: 1;
+	}
 }
 
 .card.card-yellow {
@@ -14,7 +47,7 @@
 }
 
 .card.card-blue {
-	background: lightblue;
+	/*background: lightblue;*/
 }
 
 .card.card-purple {

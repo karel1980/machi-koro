@@ -45,7 +45,8 @@ export const INITIAL_DECK = {
 
 const newTurn = () => ({
 	numRolls: 0,
-	lastRoll: undefined
+	lastRoll: undefined,
+	questions: []
 });
 
 const MachiKoro = Game({
@@ -65,7 +66,8 @@ const MachiKoro = Game({
 		playRedCards: playRedCardsMove,
 		playBlueCards: playBlueCardsMove,
 		playGreenCards: playGreenCardsMove,
-		buyCard: buyCardMove
+		buyCard: buyCardMove,
+		swapCards: playSwapCardsMove,
 	},
 
 	flow: {
@@ -83,7 +85,7 @@ const doRoll = () => Math.floor(Math.random() * 6 + 1);
 
 // move implementations exported for testing
 export function playRollMove(G, ctx, numDice) {
-	if (G.currentTurn.numRolls > 0) {
+	if (G.currentTurn.numRolls >= allowedNumberOfRolls(G.players[ctx.currentPlayer])) {
 		return G; //rolled already
 	}
 
@@ -95,13 +97,107 @@ export function playRollMove(G, ctx, numDice) {
 		return G;
 	}
 
-	let roll = [doRoll()];
-	if (numDice === 2) {
-		roll.push(doRoll());
+	let roll = [];
+	if (!_.isUndefined(G.forceRoll)) { // for testing
+		roll = G.forceRoll;
+	} else {
+		roll.push(doRoll())
+		if (numDice === 2) {
+			roll.push(doRoll());
+		}
 	}
 
-	return {...G, currentTurn: {...G.currentTurn, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll}};
+	return {...G, currentTurn: {...G.currentTurn, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll, questions: []}};
 }
+
+// exported for testing
+export function playSwapCardsMove(G, ctx, victim, cardToGive, cardToTake) {
+	if (G.currentTurn.hasSwappedCards) {
+		// Only one swap allowed
+		return G;
+	}
+
+	if (!G.currentTurn.hasPlayedBlueCards && !G.currentTurn.hasPlayedGreenCards) {
+		// other cards must be played first
+		return G;
+	}
+
+	let cardAllowingSwapping = _.find(G.players[ctx.currentPlayer].deck.filter(playerCardRollMatcher(G.currentTurn.lastRoll)), playerCard => Cards[playerCard.card].allowSwapping);
+	if (_.isNil(cardAllowingSwapping)) {
+		// player does not have card allowing to swap
+		return G;
+	}
+
+	if (!(victim in G.players)) {
+		// victim must exist
+		return G;
+	}
+
+	if (_.some(cardAllowingSwapping.excludedSymbols, (symbol) => Cards[cardToGive] === symbol)) {
+		// cards must be allowed for swapping
+		return G;
+	}
+
+	if (_.some(cardAllowingSwapping.excludedSymbols, (symbol) => Cards[cardToTake] === symbol)) {
+		// cards must be allowed for swapping
+		return G;
+	}
+
+	if (cardToGive === cardToTake) {
+		// pointless move
+		return G;
+	}
+
+	let playerIdx = Number(ctx.currentPlayer);
+	let victimIdx = Number(victim);
+
+	if (!playerDeckContainsCardType(G.players[victimIdx].deck, cardToTake)) {
+		// cannot take what victim does not have
+		return G;
+	}
+
+	if (!playerDeckContainsCardType(G.players[playerIdx].deck, cardToGive)) {
+		// cannot give what you do not have
+		return G;
+	}
+
+	//TODO: Optional improvement: check if victim === current player?
+
+	let players = [...G.players];
+
+	players[playerIdx] = {
+		...players[playerIdx],
+		deck: removePlayerCard(addPlayerCard(players[playerIdx].deck, cardToTake), cardToGive)
+	};
+	players[victimIdx] = {
+		...players[victimIdx],
+		deck: removePlayerCard(addPlayerCard(players[victimIdx].deck, cardToGive), cardToTake)
+	};
+
+	return {...G, players, currentTurn: {...G.currentTurn, hasSwappedCards: true}};
+}
+
+const playerDeckContainsCardType = (playerDeck, cardType) => {
+	return _.some(playerDeck, ({card}) => cardType === card);
+};
+
+const removePlayerCard = (playerDeck, cardType) => {
+	const playerCardIdx = playerDeck.findIndex(playerCard => playerCard.card === cardType);
+	if (playerCardIdx >= 0) {
+		return playerDeck.filter((value, idx) => idx !== playerCardIdx);
+	}
+
+	return playerDeck;
+};
+
+const addPlayerCard = (playerDeck, cardType) => {
+	return playerDeck.concat([{card: cardType}]);
+};
+
+const allowedNumberOfRolls = (player) => {
+	return player.deck.filter((cas) => (cas.enabled && Cards[cas.card].reRoll))
+		.length > 0 ? 2 : 1;
+};
 
 const playerCanRollWith2Dice = (player) => {
 	return player.deck.filter((cas) => cas.enabled && Cards[cas.card].canRollWith2Dice).length > 0;
@@ -125,12 +221,13 @@ export function playRedCardsMove(G, ctx) {
 
 		let playerIdx = (2 * G.players.length + ctx.currentPlayer - i - 1) % G.players.length;
 		let player = G.players[playerIdx];
-		for (let playerCard of player.deck.filter(matchingCategoryAndRoll('red', G.currentTurn.lastRoll))) {
+		for (let playerCard of player.deck.filter(playerCardCategoryAndRollMatcher('red', G.currentTurn.lastRoll))) {
+			let opponentCard = Cards[playerCard.card];
 			if (coins[ctx.currentPlayer] <= 0) {
 				break;
 			}
 
-			let payout = Math.min(coins[ctx.currentPlayer], Cards[playerCard.card].payout);
+			let payout = Math.min(coins[ctx.currentPlayer], opponentCard.payout + getPaymentIncrementsForCard(player.deck, opponentCard));
 
 			coins[ctx.currentPlayer] -= payout;
 			coins[playerIdx] += payout;
@@ -152,7 +249,7 @@ export function playBlueCardsMove(G, ctx) {
 
 	let players = G.players.map(p => ({
 		...p,
-		coins: p.coins + p.deck.filter(matchingCategoryAndRoll('blue', G.currentTurn.lastRoll))
+		coins: p.coins + p.deck.filter(playerCardCategoryAndRollMatcher('blue', G.currentTurn.lastRoll))
 			.map(playerCard => Cards[playerCard.card].payout)
 			.reduce(sumReducer, 0)
 	}));
@@ -161,6 +258,15 @@ export function playBlueCardsMove(G, ctx) {
 }
 
 const sumReducer = (acc, current) => acc + current;
+
+const getPaymentIncrementsForCard = (playerDeck, card) => {
+	return playerDeck.filter((cas) => cas.enabled)
+		.map(cas => Cards[cas.card])
+		.filter(playerCard => !_.isNil(playerCard.paymentIncreaseBy))
+		.filter(incrementingCard => _.some(incrementingCard.paymentIncreaseForSymbols, (symbol) => card.symbol === symbol))
+		.map(incrementingCard => incrementingCard.paymentIncreaseBy)
+		.reduce(sumReducer, 0);
+};
 
 export function playGreenCardsMove(G, ctx) {
 	if (!G.currentTurn.hasPlayedRedCards) {
@@ -175,11 +281,13 @@ export function playGreenCardsMove(G, ctx) {
 	let players = [...G.players];
 	players[ctx.currentPlayer] = current;
 
-	let activeGreenCards = current.deck.filter(matchingCategoryAndRoll('green', G.currentTurn.lastRoll))
+	let activeGreenCards = current.deck.filter(playerCardCategoryAndRollMatcher('green', G.currentTurn.lastRoll))
 		.map(playerCard => Cards[playerCard.card]);
 
 	let simpleGreenCards = activeGreenCards.filter((card) => _.isNil(card.payoutFor));
-	current.coins += simpleGreenCards.map(card => card.payout).reduce(sumReducer, 0);
+	current.coins += simpleGreenCards.map(card => {
+		return card.payout + getPaymentIncrementsForCard(current.deck, card)
+	}).reduce(sumReducer, 0);
 
 	let modifierCards = activeGreenCards.filter((card) => !_.isNil(card.payoutFor));
 	modifierCards.forEach((modifier) => {
@@ -271,15 +379,53 @@ function playerCardWithType(cardType) {
 	return (playerCard => playerCard.card === cardType);
 }
 
-const matchingCategoryAndRoll = (category, roll) =>
-	({card}) => Cards[card].category === category && matchesCardRoll(Cards[card], roll);
+const playerCardCategoryAndRollMatcher = (category, roll) => playerCard => Cards[playerCard.card].category === category && playerCardRollMatcher(roll)(playerCard);
 
-const matchesCardRoll = (card, roll) => {
-	let rolled = roll.reduce(sumReducer, 0);
+export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
+	if (G.currentTurn.hasCollectedFromOpponent) {
+		// can collect only once
+		return G;
+	}
 
-	let range = cardRange(card);
+	if (!G.currentTurn.hasPlayedBlueCards || !G.currentTurn.hasPlayedGreenCards) {
+		// play green and blue first
+		return G;
+	}
 
-	return rolled >= range.min && rolled <= range.max;
+	let cardAllowingCollecting = _.find(G.players[ctx.currentPlayer].deck.filter(playerCardRollMatcher(G.currentTurn.lastRoll)), playerCard => Cards[playerCard.card].collectFromSelectedPlayer)
+
+	if (_.isNil(cardAllowingCollecting)) {
+		// player is not allowed to collect
+		return G;
+	}
+
+	if (ctx.currentPlayer === Number(opponentId)) {
+		// pointless move
+		return G;
+	}
+
+	let players = [...G.players];
+	let player = {...players[ctx.currentPlayer]};
+	let opponent = {...players[Number(opponentId)]};
+	let amount = Math.min(opponent.coins, Cards[cardAllowingCollecting.card].payout);
+
+	player.coins += amount;
+	opponent.coins -= amount;
+
+	players[ctx.currentPlayer] = player;
+	players[Number(opponentId)] = opponent;
+
+	return {...G, players, currentTurn: {...G.currentTurn, hasCollectedFromOpponent: true}}
+}
+
+const playerCardRollMatcher = (roll) => {
+	return ({card}) => {
+		let rolled = roll.reduce(sumReducer, 0);
+
+		let range = cardRange(Cards[card]);
+
+		return rolled >= range.min && rolled <= range.max;
+	}
 };
 
 const cardRange = (card) => {

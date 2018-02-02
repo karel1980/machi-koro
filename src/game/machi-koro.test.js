@@ -6,7 +6,9 @@ import {
 	playBlueCardsMove,
 	playGreenCardsMove,
 	playRedCardsMove,
-	playRollMove
+	playRollMove,
+	playSwapCardsMove,
+	collectCoinsFromOpponentMove
 } from './machi-koro';
 
 describe('machi-koro', () => {
@@ -20,14 +22,14 @@ describe('machi-koro', () => {
 		});
 
 		it('increases numRolls on the current turn', () => {
-			expect(playRollMove(G).currentTurn.numRolls).toEqual(1);
+			expect(playRollMove(G, ctx, 1).currentTurn.numRolls).toEqual(1);
 		});
 
 		it('sets lastRoll if it is a valid move', () => {
 			expect(playRollMove(G, ctx, 1).currentTurn.lastRoll.length).toEqual(1);
 		});
 
-		it('does not let lastRoll if it is not valid move', () => {
+		it('does not let lastRoll if it is not a valid move', () => {
 			expect(playRollMove(G, ctx, 0).currentTurn.lastRoll).toBeUndefined();
 
 			expect(playRollMove(G, ctx, 2).currentTurn.lastRoll).toBeUndefined();
@@ -44,20 +46,29 @@ describe('machi-koro', () => {
 		});
 
 		it('can not roll with 2 dice if player does not have a train station', () => {
-			let G = {currentTurn: {numRolls: 0}, players: [initialPlayer(), initialPlayer()]};
-
 			G = playRollMove(G, ctx, 2);
 
 			expect(G.currentTurn.lastRoll).toBeUndefined();
 		});
 
 		it('can roll with 2 dice if player has a train station', () => {
-			let G = {currentTurn: {numRolls: 0}, players: [initialPlayer(), initialPlayer()]};
 			G = enableCard(G, 'treinstation', 0);
 
 			G = playRollMove(G, ctx, 2);
 
 			expect(G.currentTurn.lastRoll.length).toBe(2);
+		});
+
+		it('can reroll', () => {
+			expect(G.currentTurn.numRolls).toBe(0);
+			G = playRollMove(G, ctx, 1);
+			expect(G.currentTurn.numRolls).toBe(1);
+			G = playRollMove(G, ctx, 1);
+			expect(G.currentTurn.numRolls).toBe(1);
+
+			G = enableCard(G, 'radiostation', 0);
+			G = playRollMove(G, ctx, 1);
+			expect(G.currentTurn.numRolls).toBe(2);
 		});
 
 	});
@@ -127,6 +138,21 @@ describe('machi-koro', () => {
 			expect(G.players[1].coins).toEqual(5);
 			expect(G.players[2].coins).toEqual(0);
 		});
+
+		it('increases income when there is a card with paymentIncreaseBy', () => {
+			const INITIAL_GAME = {
+				currentTurn: {numRolls: 1, lastRoll: [3]},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()]
+			};
+			let G = giveCardToPlayer(INITIAL_GAME, 'cafe', 1);
+			G = enableCard(G, 'winkelcentrum', 1);
+
+			G = playRedCardsMove(G, {currentPlayer: 0});
+
+			expect(G.players[0].coins).toEqual(1);
+			expect(G.players[1].coins).toEqual(5);
+			expect(G.players[2].coins).toEqual(3);
+		});
 	});
 
 	describe('playBlueCardsMove', () => {
@@ -144,6 +170,7 @@ describe('machi-koro', () => {
 			expect(G.players[1].coins).toEqual(3);
 			expect(G.players[2].coins).toEqual(6);
 		});
+
 	});
 
 	describe('playGreenCardsMove', () => {
@@ -177,6 +204,39 @@ describe('machi-koro', () => {
 			expect(G.players[0].coins).toEqual(9);
 			expect(G.players[1].coins).toEqual(3);
 			expect(G.players[2].coins).toEqual(3);
+		});
+
+		it('increases income when there is a card with paymentIncreaseBy', () => {
+			const INITIAL_GAME = {
+				currentTurn: {numRolls: 1, lastRoll: [3], hasPlayedRedCards: true},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()]
+			};
+
+			let G = playGreenCardsMove(INITIAL_GAME, {currentPlayer: 0});
+			expect(G.players[0].coins).toEqual(4);
+
+			G = playGreenCardsMove(enableCard(
+				INITIAL_GAME, 'winkelcentrum', 0), {currentPlayer: 0});
+			expect(G.players[0].coins).toEqual(5);
+		});
+	});
+
+	describe('playCardRequiringUserInput', () => {
+		describe('swap card', () => {
+			it('can swap cards', () => {
+				let G = {
+					currentTurn: {numRolls: 1, lastRoll: [6], hasPlayedBlueCards: true, hasPlayedGreenCards: true},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
+				let ctx = { currentPlayer : 0 };
+				G = giveCardToPlayer(G, 'bedrijvencomplex', 0);
+				G = playSwapCardsMove(G, ctx, 1, 'bakkerij', 'graanveld');
+
+				expect(countCard(G.players[0].deck, 'bakkerij')).toBe(0);
+				expect(countCard(G.players[0].deck, 'graanveld')).toBe(2);
+				expect(countCard(G.players[1].deck, 'bakkerij')).toBe(2);
+				expect(countCard(G.players[1].deck, 'graanveld')).toBe(0);
+			});
 		});
 	});
 
@@ -285,6 +345,24 @@ describe('machi-koro', () => {
 
 			expect(G.players[0].coins).toEqual(10);
 			expect(countCard(G.players[0].deck, 'stadion')).toBe(1);
+		});
+	});
+
+	describe('collect coins from appointed player', () => {
+		it('allows the player to collect coins from a specific player', () => {
+			let G = {
+				deck: INITIAL_DECK,
+				currentTurn: {numRolls: 1, lastRoll: [6], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()]
+			};
+			G = giveCardToPlayer(G, 'tvstation', 0);
+			G = setPlayerCoins(G, 0, 100);
+			G = setPlayerCoins(G, 1, 100);
+
+			G = collectCoinsFromOpponentMove(G, { currentPlayer: 0 }, 1);
+
+			expect(G.players[0].coins).toEqual(106);
+			expect(G.players[1].coins).toEqual(94);
 		});
 	});
 

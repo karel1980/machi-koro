@@ -36,7 +36,7 @@ export class Card extends React.Component {
 		}
 
 		return (
-			<div className={cardClassNames(card, enabled)} onClick={() => this.props.menuItems && this.toggle()}>
+			<div className={cardClassNames(card, enabled, this.state.isMenuOpen)} onClick={() => this.props.menuItems && this.toggle()}>
 				<div className="card-top">
 					<div className="roll">{rollDisplayString(card.roll)}</div>
 					<div className="label">
@@ -62,10 +62,9 @@ const rollDisplayString = value => value === undefined ? (<span>&nbsp;</span>) :
 
 const costDisplayString = (value, free) => free ? (<span>&nbsp;</span>) : value;
 
-const cardClassNames = (card, enabled) => {
-	if (enabled === false) {
-		return "card card-disabled";
-	}
+const cardClassNames = (card, enabled, highlight) => {
+	let suffix = enabled === false ? 'disabled' : card.category;
+	let highlightClass = highlight ? 'highlight' : '';
 
-	return "card card-" + card.category;
+	return `card card-${suffix} ${highlightClass}`;
 };

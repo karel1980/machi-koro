@@ -11,93 +11,56 @@ import './App.css';
 
 import {Client} from 'boardgame.io/client';
 import MachiKoro from './game/machi-koro';
-import {Card} from './components/card';
+import {Board} from './components/board';
 
-const Board = (props) => {
-	let buyCard = isBuyingAllowed(props.G.currentTurn) ? ((cardType) => props.moves.buyCard(cardType)) : null;
-	return (
-		<div>
-			<button onClick={() => props.makeMove('roll', 1)}>Roll with 1 die</button>
-			<button onClick={() => props.makeMove('roll', 2)}>Roll with 2 dice</button>
-			<button onClick={() => props.makeMove('playRedCards')}>Play red cards</button>
-			<button onClick={() => props.makeMove('playBlueCards')}>Play blue cards</button>
-			<button onClick={() => props.makeMove('playGreenCards')}>Play green cards</button>
+import {HashRouter as Router, Route, withRouter} from 'react-router-dom';
 
-			<h1>Dice</h1>
-			<div>{props.G.currentTurn.lastRoll}</div>
-
-			<Deck deck={props.G.deck} onBuy={buyCard}/>
-			<Player name="0" player={props.G.players[0]} onBuy={props.ctx.currentPlayer === "0" && buyCard}/>
-			<Player name="1" player={props.G.players[1]} onBuy={props.ctx.currentPlayer === "1" && buyCard}/>
-
-		</div>
-	);
-};
-
-const isBuyingAllowed = (currentTurn) => {
-	return currentTurn.hasPlayedBlueCards && currentTurn.hasPlayedGreenCards && !currentTurn.hasBoughtCard;
-};
-
-const Deck = (props) => (
-	<div>
-		<h2>Deck</h2>
-		<div className="deck">{renderDeck(props.deck, props.onBuy)}</div>
-	</div>
-);
-
-const Player = (props) => (
-	<div>
-		<h2>Player {props.name} (Coins: {props.player.coins})</h2>
-		<div>{renderPlayerDeck(1, props.player.deck, props.onBuy)}</div>
-	</div>
-);
-
-const createDeckCardMenu = (cardType, onBuy) => {
-	return createCardMenu(cardType, onBuy);
-};
-
-const createPlayerCardMenu = (cardType, onBuy) => {
-	return createCardMenu(cardType, onBuy);
-};
-
-const createCardMenu = (cardType, onBuy) => {
-	let menuItems = null;
-	if (onBuy) {
-		menuItems = [
-			<li key="buy" onClick={() => onBuy(cardType)}>Buy this card</li>,
-			<li key="nothing">Do nothing</li>
-		];
-	}
-	return menuItems;
-};
-
-const renderDeck = (deck, onBuy) => {
-	return Object.keys(deck).filter((key) => deck[key] > 0)
-		.map(key => {
-			let menuItems = createDeckCardMenu(key, onBuy);
-			return (<Card key={key} type={key} menuItems={menuItems}/>)
-		});
-}
-
-const renderPlayerDeck = (playerId, playerDeck, onBuy) => (
-	playerDeck.map((cas, idx) => {
-		let key = playerCardKey(playerId, cas.card, idx);
-		let menuItems = createPlayerCardMenu(cas.card, onBuy);
-		return <Card key={key} type={cas.card}
-					 free={cas.free} enabled={cas.enabled} menuItems={menuItems}/>
-	}));
-
-const playerCardKey = (playerId, card, cardIdx) => "player-" + playerId + "-" + card + "-" + cardIdx;
-
-const ClientApp = Client({
+const SingleClient = Client({
 	game: MachiKoro,
 	board: Board
 });
 
+const MultiClient = Client({
+	game: MachiKoro,
+	board: Board,
+	multiplayer: true
+});
+
+const Hello = () => <div>
+	<h2>Play alone</h2>
+	<img src={'./assets/house.png'} />
+	<li><a href="#/game/single">Forever alone</a></li>
+
+	<h2>Play test game</h2>
+	<li><a href="#/game/multi/test/0">Play as player 0</a></li>
+	<li><a href="#/game/multi/test/1">Play as player 1</a></li>
+</div>;
+
+const RoutedSingleClientApp = withRouter(() => {
+	return <SingleClient/>;
+});
+
+const RoutedMultiClientApp = withRouter(({match}) => {
+	return <MultiClient gameID={match.params.gameID} playerID={match.params.playerID}/>
+});
+
 const App = () => (
 	<div>
-		<h1>Welcome to Machi Koro</h1>
-		<ClientApp gameID="singleplayer"/>
+		<h1 id="title">Machi Koro</h1>
+		<Router>
+			<div>
+				<Route key={'index'}
+					   exact
+					   path="/"
+					   component={Hello}/>
+				<Route key={'game-single'}
+					   path="/game/single"
+					   component={RoutedSingleClientApp}/>
+				<Route key={'game-multi'}
+					   path="/game/multi/:gameID/:playerID"
+					   component={RoutedMultiClientApp}/>
+			</div>
+		</Router>
 	</div>
 );
 

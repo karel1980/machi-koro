@@ -7,6 +7,7 @@
     "babel-plugin-module-resolver": "^3.0.0",
     "babel-preset-stage-0": "^6.24.1",
     "boardgame.io": "^0.16.7",
+    "file-loader": "^1.1.6",
     "immutability-helper": "^2.6.4",
     "module-resolver": "^1.0.0",
     "node-sass-chokidar": "0.0.3",
@@ -14,7 +15,8 @@
     "react": "^16.2.0",
     "react-dd-menu": "^2.0.2",
     "react-dom": "^16.2.0",
-    "react-scripts": "1.1.0"
+    "react-scripts": "1.1.0",
+    "url-loader": "^0.6.2"
   },
   "scripts": {
     "gameserver": "cross-env NODE_ENV=development babel-watch --presets es2015 src/game/server.js",

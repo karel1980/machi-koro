@@ -1,5 +1,6 @@
 export const Cards = {
 	"pretpark": {
+		"roll": "0",
 		"category": "yellow",
 		"name": "Pretpark",
 		"cost": 16,
@@ -9,6 +10,7 @@ export const Cards = {
 	},
 	"treinstation": {
 		"cost": 4,
+		"roll": "0",
 		"name": "Treinstation",
 		"category": "yellow",
 		"description": "Je mag met twee dobbelstenen gooien.",
@@ -23,7 +25,9 @@ export const Cards = {
 		"name": "Winkelcentrum",
 		"category": "yellow",
 		"description": "Verhoog het aantal munten dat je voor je [koffie] en [huisje] kaarten krijgt met 1.",
-		"maxOwnCount": 1
+		"maxOwnCount": 1,
+		"paymentIncreaseBy": 1,
+		"paymentIncreaseForSymbols": ["coffee", "house"]
 	},
 	"radiostation": {
 		"cost": 22,
@@ -32,6 +36,7 @@ export const Cards = {
 		"description": "Je mag je dobbelstenen eenmaal per beurt opnieuw gooien.",
 		"roll": "0",
 		"symbol": "tower",
+		"reRoll": true,
 		"maxOwnCount": 1
 	},
 	"graanveld": {
@@ -163,6 +168,7 @@ export const Cards = {
 		"cost": 7,
 		"description": "Ontvang 6 munten van een speler naar keuze als het jouw beurt is.",
 		"payout": 6,
+		"collectFromSelectedPlayer": true,
 		"maxOwnCount": 1
 	},
 	"bedrijvencomplex": {
@@ -172,6 +178,8 @@ export const Cards = {
 		"description": "Je mag een kaart met een speler naar keuze ruilen (geen [tower] kaart) als het jouw beurt is.",
 		"roll": "6",
 		"symbol": "tower",
-		"maxOwnCount": 1
+		"maxOwnCount": 1,
+		"allowSwapping": true,
+		"excludedSymbols": ["tower"]
 	}
 };
