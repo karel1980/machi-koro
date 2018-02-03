@@ -18,12 +18,12 @@ export class Board extends React.Component {
 
 	render() {
 		let props = this.props;
-		let buyingCardsIsAllowed = hasControl(props) && props.G.currentTurn.hasPlayedGreenCards && props.G.currentTurn.hasPlayedBlueCards && !props.G.currentTurn.hasBoughtCard;
+		let buyingCardsIsAllowed = hasControl(props) && props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.hasBoughtCard;
 		let buyCard = buyingCardsIsAllowed ? (cardType) => props.moves.buyCard(cardType) : null;
 
 		let canSwap = hasControl(props)
 			&& !props.G.currentTurn.hasSwappedCards
-			&& props.G.currentTurn.hasPlayedBlueCards === true && props.G.currentTurn.hasPlayedGreenCards === true
+			&& props.G.currentTurn.hasDistributedCoins
 			&& !_.isNil(props.G.players[props.ctx.currentPlayer].deck
 				.filter(playerCardRollMatcher(props.G.currentTurn.lastRoll))
 				.find(playerCard => playerCard.enabled !== false && Cards[playerCard.card].allowSwapping));
@@ -58,10 +58,7 @@ const Palette = (props) => {
 
 	let roll1 = !control ? undefined : <button onClick={() => props.moves.roll(1)}>Roll with 1 die</button>;
 	let roll2 = !control ? undefined : <button onClick={() => props.moves.roll(2)}>Roll with 2 dice</button>;
-	let playRed = !control ? undefined : <button onClick={() => props.moves.playRedCards()}>Play red cards</button>;
-	let playBlue = !control ? undefined : <button onClick={() => props.moves.playBlueCards()}>Play blue cards</button>;
-	let playGreen = !control ? undefined :
-		<button onClick={() => props.moves.playGreenCards()}>Play green cards</button>;
+	let distributeCoins = !control ? undefined : <button onClick={() => props.moves.distributeCoins()}>Distribute coins</button>;
 	let restartTurn = !control ? undefined :
 		<button onClick={() => props.moves.restartTurn()}>Play another turn</button>;
 	let endTurn = !control ? undefined : <button onClick={() => props.events.endTurn()}>End my turn</button>;
@@ -80,11 +77,9 @@ const Palette = (props) => {
 		<div>
 			{showRollButton(props) ? roll1 : undefined}
 			{showRoll2Button(props) ? roll2 : undefined}
-			{props.G.currentTurn.numRolls > 0 && !props.G.currentTurn.hasPlayedRedCards ? playRed : undefined}
-			{props.G.currentTurn.hasPlayedRedCards && !props.G.currentTurn.hasPlayedBlueCards ? playBlue : undefined}
-			{props.G.currentTurn.hasPlayedRedCards && !props.G.currentTurn.hasPlayedGreenCards ? playGreen : undefined}
-			{props.G.currentTurn.hasPlayedGreenCards && props.G.currentTurn.hasPlayedBlueCards && props.G.currentTurn.canRestart ? restartTurn : undefined}
-			{props.G.currentTurn.hasPlayedBlueCards && props.G.currentTurn.hasPlayedGreenCards && !props.G.currentTurn.canRestart ? endTurn : undefined}
+			{props.G.currentTurn.numRolls > 0 && !props.G.currentTurn.hasDistributedCoins ? distributeCoins : undefined}
+			{props.G.currentTurn.hasDistributedCoins && props.G.currentTurn.canRestart ? restartTurn : undefined}
+			{props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.canRestart ? endTurn : undefined}
 		</div>
 	</div>);
 };
@@ -104,7 +99,7 @@ const isSpectator = (props) => {
 };
 
 const showRollButton = (props) => {
-	return hasControl(props) && playerCanRoll(props.G.currentTurn.numRolls, props.G.players[props.ctx.currentPlayer], props.G.currentTurn.hasPlayedRedCards);
+	return hasControl(props) && playerCanRoll(props.G.currentTurn.numRolls, props.G.players[props.ctx.currentPlayer], props.G.currentTurn.hasDistributedCoins);
 };
 
 const showRoll2Button = (props) => {

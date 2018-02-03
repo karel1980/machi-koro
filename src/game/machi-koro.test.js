@@ -3,9 +3,7 @@ import {
 	INITIAL_DECK,
 	initialPlayer,
 	newTurn,
-	playBlueCardsMove,
-	playGreenCardsMove,
-	playRedCardsMove,
+	distributeCoinsMove,
 	playRollMove,
 	playSwapCardsMove,
 	collectCoinsFromOpponentMove,
@@ -74,151 +72,153 @@ describe('machi-koro', () => {
 
 	});
 
-	describe('playRedCardsMove', () => {
-		it('does nothing when there are no red cards', () => {
-			let G = {currentTurn: {numRolls: 1}, players: [initialPlayer(), initialPlayer()]};
+	describe('distributeCoinsMove', () => {
+		describe('red cards', () => {
+			fit('does nothing when there are no red cards', () => {
+				let G = {currentTurn: {numRolls: 1, lastRoll: [1]}, players: [initialPlayer(), initialPlayer()]};
 
-			G = playRedCardsMove(G, {currentPlayer: 0});
+				G = distributeCoinsMove(G, {currentPlayer: 0});
 
-			expect(G.players[0].coins).toEqual(3);
-			expect(G.players[0].coins).toEqual(3);
+				expect(G.players[0].coins).toEqual(4);
+				expect(G.players[0].coins).toEqual(4);
+			});
+
+			it('gives coins from player 0 to player 1 when player 1 has a red card and player 0 rolls that value', () => {
+				let G = {currentTurn: {numRolls: 1, lastRoll: [3]}, players: [initialPlayer(), initialPlayer()]};
+				G = giveCardToPlayer(G, 'cafe', 1);
+
+				G = distributeCoinsMove(G, {currentPlayer: 0});
+
+				expect(G.players[0].coins).toEqual(3);
+				expect(G.players[1].coins).toEqual(4);
+			});
+
+			it('does nothing when a different value is rolled', () => {
+				let G = {currentTurn: {numRolls: 1, lastRoll: [4]}, players: [initialPlayer(), initialPlayer()]};
+				G = giveCardToPlayer(G, 'cafe', 1);
+
+				G = distributeCoinsMove(G, {currentPlayer: 0});
+
+				expect(G.players[0].coins).toEqual(3);
+				expect(G.players[1].coins).toEqual(3);
+			});
+
+			it('goes through players in reverse order until player is broke', () => {
+				let G = {
+					currentTurn: {numRolls: 1, lastRoll: [3]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer(), initialPlayer(), initialPlayer()]
+				};
+				G = giveCardToPlayer(G, 'cafe', 0);
+				G = giveCardToPlayer(G, 'cafe', 1);
+				G = giveCardToPlayer(G, 'cafe', 2);
+				G = giveCardToPlayer(G, 'cafe', 3);
+				G = giveCardToPlayer(G, 'cafe', 4);
+
+				G = distributeCoinsMove(G, {currentPlayer: 2});
+
+				expect(G.players[0].coins).toEqual(4);
+				expect(G.players[1].coins).toEqual(4);
+				expect(G.players[2].coins).toEqual(1);
+				expect(G.players[3].coins).toEqual(3);
+				expect(G.players[4].coins).toEqual(4);
+			});
+
+			it('correctly pays out if current user does not have enough left', () => {
+				let G = {
+					currentTurn: {numRolls: 1, lastRoll: [9]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
+				G = giveCardToPlayer(G, 'restaurant', 0);
+				G = giveCardToPlayer(G, 'restaurant', 1);
+				G = giveCardToPlayer(G, 'restaurant', 2);
+
+				G = distributeCoinsMove(G, {currentPlayer: 2});
+
+				expect(G.players[0].coins).toEqual(4);
+				expect(G.players[1].coins).toEqual(5);
+				expect(G.players[2].coins).toEqual(0);
+			});
+
+			it('increases income when there is a card with paymentIncreaseBy', () => {
+				const INITIAL_GAME = {
+					currentTurn: {numRolls: 1, lastRoll: [3]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
+				let G = giveCardToPlayer(INITIAL_GAME, 'cafe', 1);
+				G = enableCard(G, 'winkelcentrum', 1);
+
+				G = distributeCoinsMove(G, {currentPlayer: 0});
+
+				expect(G.players[0].coins).toEqual(2);
+				expect(G.players[1].coins).toEqual(5);
+				expect(G.players[2].coins).toEqual(3);
+			});
 		});
 
-		it('gives coins from player 0 to player 1 when player 1 has a red card and player 0 rolls that value', () => {
-			let G = {currentTurn: {numRolls: 1, lastRoll: [3]}, players: [initialPlayer(), initialPlayer()]};
-			G = giveCardToPlayer(G, 'cafe', 1);
+		describe('blue cards', () => {
+			it('gives coins to all players if card value is rolled', () => {
+				let G = {
+					currentTurn: {numRolls: 1, lastRoll: [10]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
+				G = giveCardToPlayer(G, 'appelboomgaard', 0);
+				G = giveCardToPlayer(G, 'appelboomgaard', 2);
 
-			G = playRedCardsMove(G, {currentPlayer: 0});
+				G = distributeCoinsMove(G, {currentPlayer: 0});
 
-			expect(G.players[0].coins).toEqual(2);
-			expect(G.players[1].coins).toEqual(4);
+				expect(G.players[0].coins).toEqual(6);
+				expect(G.players[1].coins).toEqual(3);
+				expect(G.players[2].coins).toEqual(6);
+			});
+
 		});
 
-		it('does nothing when a different value is rolled', () => {
-			let G = {currentTurn: {numRolls: 1, lastRoll: [4]}, players: [initialPlayer(), initialPlayer()]};
-			G = giveCardToPlayer(G, 'cafe', 1);
+		describe('green cards', () => {
+			it('gives coins to current player for simple green cards', () => {
+				let G = {
+					currentTurn: {numRolls: 1, lastRoll: [2]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
 
-			G = playRedCardsMove(G, {currentPlayer: 0});
+				G = distributeCoinsMove(G, {currentPlayer: 0});
 
-			expect(G.players[0].coins).toEqual(3);
-			expect(G.players[1].coins).toEqual(3);
-		});
+				expect(G.players[0].coins).toEqual(4);
+				expect(G.players[1].coins).toEqual(3);
+				expect(G.players[2].coins).toEqual(3);
+			});
 
-		it('goes through players in reverse order until player is broke', () => {
-			let G = {
-				currentTurn: {numRolls: 1, lastRoll: [3]},
-				players: [initialPlayer(), initialPlayer(), initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-			G = giveCardToPlayer(G, 'cafe', 0);
-			G = giveCardToPlayer(G, 'cafe', 1);
-			G = giveCardToPlayer(G, 'cafe', 2);
-			G = giveCardToPlayer(G, 'cafe', 3);
-			G = giveCardToPlayer(G, 'cafe', 4);
+			it('gives coins for "modifier" green cards', () => {
+				let G = {
+					currentTurn: {numRolls: 1, lastRoll: [12]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
+				G = giveCardToPlayer(G, 'graanveld', 0);
+				G = giveCardToPlayer(G, 'groenteenfruitmarkt', 0);
+				G = giveCardToPlayer(G, 'graanveld', 1);
+				G = giveCardToPlayer(G, 'groenteenfruitmarkt', 1);
+				G = giveCardToPlayer(G, 'graanveld', 2);
+				G = giveCardToPlayer(G, 'groenteenfruitmarkt', 2);
 
-			G = playRedCardsMove(G, {currentPlayer: 2});
+				G = distributeCoinsMove(G, {currentPlayer: 0});
 
-			expect(G.players[0].coins).toEqual(4);
-			expect(G.players[1].coins).toEqual(4);
-			expect(G.players[2].coins).toEqual(0);
-			expect(G.players[3].coins).toEqual(3);
-			expect(G.players[4].coins).toEqual(4);
-		});
+				expect(G.players[0].coins).toEqual(9);
+				expect(G.players[1].coins).toEqual(3);
+				expect(G.players[2].coins).toEqual(3);
+			});
 
-		it('correctly pays out if current user does not have enough left', () => {
-			let G = {
-				currentTurn: {numRolls: 1, lastRoll: [9]},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-			G = giveCardToPlayer(G, 'restaurant', 0);
-			G = giveCardToPlayer(G, 'restaurant', 1);
-			G = giveCardToPlayer(G, 'restaurant', 2);
+			it('increases income when there is a card with paymentIncreaseBy', () => {
+				const INITIAL_GAME = {
+					currentTurn: {numRolls: 1, lastRoll: [3]},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				};
 
-			G = playRedCardsMove(G, {currentPlayer: 2});
+				let G = distributeCoinsMove(INITIAL_GAME, {currentPlayer: 0});
+				expect(G.players[0].coins).toEqual(4);
 
-			expect(G.players[0].coins).toEqual(4);
-			expect(G.players[1].coins).toEqual(5);
-			expect(G.players[2].coins).toEqual(0);
-		});
-
-		it('increases income when there is a card with paymentIncreaseBy', () => {
-			const INITIAL_GAME = {
-				currentTurn: {numRolls: 1, lastRoll: [3]},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-			let G = giveCardToPlayer(INITIAL_GAME, 'cafe', 1);
-			G = enableCard(G, 'winkelcentrum', 1);
-
-			G = playRedCardsMove(G, {currentPlayer: 0});
-
-			expect(G.players[0].coins).toEqual(1);
-			expect(G.players[1].coins).toEqual(5);
-			expect(G.players[2].coins).toEqual(3);
-		});
-	});
-
-	describe('playBlueCardsMove', () => {
-		it('gives coins to all players if card value is rolled', () => {
-			let G = {
-				currentTurn: {numRolls: 1, lastRoll: [10], hasPlayedRedCards: true},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-			G = giveCardToPlayer(G, 'appelboomgaard', 0);
-			G = giveCardToPlayer(G, 'appelboomgaard', 2);
-
-			G = playBlueCardsMove(G, undefined);
-
-			expect(G.players[0].coins).toEqual(6);
-			expect(G.players[1].coins).toEqual(3);
-			expect(G.players[2].coins).toEqual(6);
-		});
-
-	});
-
-	describe('playGreenCardsMove', () => {
-		it('gives coins to current player for simple green cards', () => {
-			let G = {
-				currentTurn: {numRolls: 1, lastRoll: [2], hasPlayedRedCards: true},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-
-			G = playGreenCardsMove(G, {currentPlayer: 0});
-
-			expect(G.players[0].coins).toEqual(4);
-			expect(G.players[1].coins).toEqual(3);
-			expect(G.players[2].coins).toEqual(3);
-		});
-
-		it('gives coins for "modifier" green cards', () => {
-			let G = {
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedRedCards: true},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-			G = giveCardToPlayer(G, 'graanveld', 0);
-			G = giveCardToPlayer(G, 'groenteenfruitmarkt', 0);
-			G = giveCardToPlayer(G, 'graanveld', 1);
-			G = giveCardToPlayer(G, 'groenteenfruitmarkt', 1);
-			G = giveCardToPlayer(G, 'graanveld', 2);
-			G = giveCardToPlayer(G, 'groenteenfruitmarkt', 2);
-
-			G = playGreenCardsMove(G, {currentPlayer: 0});
-
-			expect(G.players[0].coins).toEqual(9);
-			expect(G.players[1].coins).toEqual(3);
-			expect(G.players[2].coins).toEqual(3);
-		});
-
-		it('increases income when there is a card with paymentIncreaseBy', () => {
-			const INITIAL_GAME = {
-				currentTurn: {numRolls: 1, lastRoll: [3], hasPlayedRedCards: true},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
-			};
-
-			let G = playGreenCardsMove(INITIAL_GAME, {currentPlayer: 0});
-			expect(G.players[0].coins).toEqual(4);
-
-			G = playGreenCardsMove(enableCard(
-				INITIAL_GAME, 'winkelcentrum', 0), {currentPlayer: 0});
-			expect(G.players[0].coins).toEqual(5);
+				G = distributeCoinsMove(enableCard(
+					INITIAL_GAME, 'winkelcentrum', 0), {currentPlayer: 0});
+				expect(G.players[0].coins).toEqual(5);
+			});
 		});
 	});
 
@@ -226,7 +226,7 @@ describe('machi-koro', () => {
 		describe('swap card', () => {
 			it('can swap cards', () => {
 				let G = {
-					currentTurn: {numRolls: 1, lastRoll: [6], hasPlayedBlueCards: true, hasPlayedGreenCards: true},
+					currentTurn: {numRolls: 1, lastRoll: [6], hasDistributedCoins: true},
 					players: [initialPlayer(), initialPlayer(), initialPlayer()]
 				};
 				let ctx = {currentPlayer: 0};
@@ -245,7 +245,7 @@ describe('machi-koro', () => {
 		it('has a buyCardMove', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedRedCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 
@@ -256,7 +256,7 @@ describe('machi-koro', () => {
 		it('can buy cards', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 
@@ -269,7 +269,7 @@ describe('machi-koro', () => {
 		it('cannot cards which are too expensive', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 
@@ -282,7 +282,7 @@ describe('machi-koro', () => {
 		it('can buy a yellow card', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 			G = setPlayerCoins(G, 0, 5);
@@ -297,7 +297,7 @@ describe('machi-koro', () => {
 		it('can not buy yellow card if player does not have enough coins', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 
@@ -311,7 +311,7 @@ describe('machi-koro', () => {
 		it('does not allow buying card which has "maxOwnCount: 1 a second time', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 
@@ -332,7 +332,7 @@ describe('machi-koro', () => {
 		it('does not allow buying a purple card which has "maxOwnCount: 1 a second time', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [12], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [12], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 
@@ -353,7 +353,7 @@ describe('machi-koro', () => {
 		it('allows the player to collect coins from a specific player', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [6], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [6], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 			G = giveCardToPlayer(G, 'tvstation', 0);
@@ -388,8 +388,7 @@ describe('machi-koro', () => {
 				currentTurn: {
 					numRolls: 1,
 					lastRoll: [3, 3],
-					hasPlayedGreenCards: true,
-					hasPlayedBlueCards: true,
+					hasDistributedCoins: true,
 					canRestart: true
 				},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
@@ -405,7 +404,7 @@ describe('machi-koro', () => {
 		it('does not allow restarting turn if player does not have the appropriate card', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [3, 3], hasPlayedGreenCards: true, hasPlayedBlueCards: true},
+				currentTurn: {numRolls: 1, lastRoll: [3, 3], hasDistributedCoins: true},
 				players: [initialPlayer(), initialPlayer(), initialPlayer()]
 			};
 

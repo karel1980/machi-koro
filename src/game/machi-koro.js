@@ -63,9 +63,7 @@ const MachiKoro = Game({
 
 	moves: {
 		roll: playRollMove,
-		playRedCards: playRedCardsMove,
-		playBlueCards: playBlueCardsMove,
-		playGreenCards: playGreenCardsMove,
+		distributeCoins: distributeCoinsMove,
 		buyCard: buyCardMove,
 		swapCards: playSwapCardsMove,
 		restartTurn: restartTurnMove
@@ -122,7 +120,7 @@ export function playSwapCardsMove(G, ctx, victim, cardToGive, cardToTake) {
 		return G;
 	}
 
-	if (!G.currentTurn.hasPlayedBlueCards && !G.currentTurn.hasPlayedGreenCards) {
+	if (!G.currentTurn.hasDistributedCoins) {
 		// other cards must be played first
 		return G;
 	}
@@ -208,15 +206,23 @@ export const playerCanRollWith2Dice = (player) => {
 	return player.deck.filter((cas) => cas.enabled && Cards[cas.card].canRollWith2Dice).length > 0;
 };
 
-export function playRedCardsMove(G, ctx) {
-	if (G.currentTurn.numRolls === 0) {
-		return G; //must roll first
+export function distributeCoinsMove(G, ctx) {
+	if (G.currentTurn.numRolls == 0) {
+		return G; // must roll first
 	}
 
-	if (G.currentTurn.hasPlayedRedCards) {
-		return G;
+	if (G.currentTurn.hasDistributedCoins) {
+		return G; // coins can be distributed only once per turn
 	}
 
+	G = distributeCoinsForRedCards(G, ctx);
+	G = distributeCoinsForBlueCards(G, ctx);
+	G = distributeCoinsForGreenCards(G, ctx);
+
+	return {...G, currentTurn: {...G.currentTurn, hasDistributedCoins: true }};
+}
+
+export function distributeCoinsForRedCards(G, ctx) {
 	// start at currentPlayer - 1, go down and stop before currentPlayer
 	let coins = G.players.map(p => p.coins);
 	for (let i = 0; i < G.players.length - 1; i++) {
@@ -231,7 +237,6 @@ export function playRedCardsMove(G, ctx) {
 			if (coins[ctx.currentPlayer] <= 0) {
 				break;
 			}
-
 			let payout = Math.min(coins[ctx.currentPlayer], opponentCard.payout + getPaymentIncrementsForCard(player.deck, opponentCard));
 
 			coins[ctx.currentPlayer] -= payout;
@@ -240,26 +245,20 @@ export function playRedCardsMove(G, ctx) {
 	}
 
 	let players = G.players.map((player, idx) => ({...player, coins: coins[idx]}));
-	return {...G, currentTurn: {...G.currentTurn, hasPlayedRedCards: true}, players};
+	return {...G, players};
 }
 
-export function playBlueCardsMove(G, ctx) {
-	if (!G.currentTurn.hasPlayedRedCards) {
-		return G; // must play red cards first
-	}
+export function distributeCoinsForBlueCards(G, ctx) {
+	let players = G.players.map(p => {
+		return ({
+			...p,
+			coins: p.coins + p.deck.filter(playerCardCategoryAndRollMatcher('blue', G.currentTurn.lastRoll))
+				.map(playerCard => Cards[playerCard.card].payout)
+				.reduce(sumReducer, 0)
+		});
+	});
 
-	if (G.currentTurn.hasPlayedBlueCards) {
-		return G; // can be played only once
-	}
-
-	let players = G.players.map(p => ({
-		...p,
-		coins: p.coins + p.deck.filter(playerCardCategoryAndRollMatcher('blue', G.currentTurn.lastRoll))
-			.map(playerCard => Cards[playerCard.card].payout)
-			.reduce(sumReducer, 0)
-	}));
-
-	return {...G, currentTurn: {...G.currentTurn, hasPlayedBlueCards: true}, players};
+	return {...G, players};
 }
 
 const sumReducer = (acc, current) => acc + current;
@@ -273,15 +272,7 @@ const getPaymentIncrementsForCard = (playerDeck, card) => {
 		.reduce(sumReducer, 0);
 };
 
-export function playGreenCardsMove(G, ctx) {
-	if (!G.currentTurn.hasPlayedRedCards) {
-		return G; // must play red cards first
-	}
-
-	if (G.currentTurn.hasPlayedGreenCards) {
-		return G; // can be played only once
-	}
-
+export function distributeCoinsForGreenCards(G, ctx) {
 	let current = {...G.players[ctx.currentPlayer]};
 	let players = [...G.players];
 	players[ctx.currentPlayer] = current;
@@ -299,7 +290,7 @@ export function playGreenCardsMove(G, ctx) {
 		current.coins += modifier.payout * current.deck.filter((card) => Cards[card.card].symbol === modifier.payoutFor).length;
 	});
 
-	return {...G, currentTurn: {...G.currentTurn, hasPlayedGreenCards: true}, players};
+	return {...G, players};
 }
 
 export function buyCardMove(G, ctx, cardType) {
@@ -307,7 +298,7 @@ export function buyCardMove(G, ctx, cardType) {
 		return G;
 	}
 
-	if (!G.currentTurn.hasPlayedBlueCards || !G.currentTurn.hasPlayedGreenCards) {
+	if (!G.currentTurn.hasDistributedCoins) {
 		return G;
 	}
 
@@ -315,7 +306,8 @@ export function buyCardMove(G, ctx, cardType) {
 		return G;
 	}
 
-	if (Cards[cardType].cost > G.players[ctx.currentPlayer].coins) {
+	let player = G.players[ctx.currentPlayer];
+	if (Cards[cardType].cost > player.coins) {
 		return G;
 	}
 
@@ -384,7 +376,9 @@ function playerCardWithType(cardType) {
 	return (playerCard => playerCard.card === cardType);
 }
 
-const playerCardCategoryAndRollMatcher = (category, roll) => playerCard => Cards[playerCard.card].category === category && playerCardRollMatcher(roll)(playerCard);
+const playerCardCategoryAndRollMatcher = (category, roll) => {
+	return playerCard => Cards[playerCard.card].category === category && playerCardRollMatcher(roll)(playerCard);
+};
 
 export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
 	if (G.currentTurn.hasCollectedFromOpponent) {
@@ -392,8 +386,8 @@ export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
 		return G;
 	}
 
-	if (!G.currentTurn.hasPlayedBlueCards || !G.currentTurn.hasPlayedGreenCards) {
-		// play green and blue first
+	if (!G.currentTurn.hasDistributedCoins) {
+		// play red,blue,green cards first
 		return G;
 	}
 
@@ -424,7 +418,7 @@ export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
 }
 
 export function restartTurnMove(G, ctx) {
-	if (G.currentTurn.hasPlayedGreenCards && G.currentTurn.hasPlayedBlueCards && G.currentTurn.canRestart) {
+	if (G.currentTurn.hasDistributedCoins && G.currentTurn.canRestart) {
 		return { ...G, currentTurn: newTurn() };
 	}
 
