@@ -58,7 +58,7 @@ const MachiKoro = Game({
 			initialPlayer(),
 			initialPlayer()
 		],
-		currentTurn: newTurn()
+		currentTurn: newTurn(),
 	}),
 
 	moves: {
@@ -431,7 +431,7 @@ export function restartTurnMove(G, ctx) {
 	return G;
 }
 
-const playerCardRollMatcher = (roll) => {
+export const playerCardRollMatcher = (roll) => {
 	return ({card}) => {
 		let rolled = roll.reduce(sumReducer, 0);
 

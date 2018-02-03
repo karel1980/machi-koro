@@ -3,22 +3,49 @@ import React from 'react';
 import {Card} from './card';
 import './board.css';
 import * as _ from 'lodash';
-import {allowedNumberOfRolls, playerCanRollWith2Dice} from "../game/machi-koro";
+import {allowedNumberOfRolls, playerCanRollWith2Dice, playerCardRollMatcher} from "../game/machi-koro";
 import {Cards} from '../game/cards';
 
 export class Board extends React.Component {
+
+	state = {
+		firstToSwap: undefined
+	}
+
+	startSwap(cardType) {
+		this.setState({...this.state, firstToSwap: cardType});
+	}
 
 	render() {
 		let props = this.props;
 		let buyingCardsIsAllowed = hasControl(props) && props.G.currentTurn.hasPlayedGreenCards && props.G.currentTurn.hasPlayedBlueCards && !props.G.currentTurn.hasBoughtCard;
 		let buyCard = buyingCardsIsAllowed ? (cardType) => props.moves.buyCard(cardType) : null;
-		return (
-			<div>
-				<Palette {...props}/>
 
-				<Deck deck={props.G.deck} currentPlayer={props.G.players[props.ctx.currentPlayer]} onBuy={buyCard}/>
-				<Player name="0" G={props.G} ctx={props.ctx} onBuy={buyCard}/>
-				<Player name="1" G={props.G} ctx={props.ctx} onBuy={buyCard}/>
+		let canSwap = hasControl(props)
+			&& !props.G.currentTurn.hasSwappedCards
+			&& props.G.currentTurn.hasPlayedBlueCards === true && props.G.currentTurn.hasPlayedGreenCards === true
+			&& !_.isNil(props.G.players[props.ctx.currentPlayer].deck
+				.filter(playerCardRollMatcher(props.G.currentTurn.lastRoll))
+				.find(playerCard => playerCard.enabled !== false && Cards[playerCard.card].allowSwapping));
+
+		let startSwap = canSwap ? (cardType) => this.startSwap(cardType) : undefined;
+		let endSwap = (canSwap && !_.isNil(this.state.firstToSwap)) ? (victim, cardType) => {
+			props.moves.swapCards(victim, this.state.firstToSwap, cardType);
+			this.setState({...this.state, firstToSwap: undefined});
+		} : undefined;
+		return (
+			<div class="board-container">
+				<div class="board-main">
+					<Deck deck={props.G.deck} currentPlayer={props.G.players[props.ctx.currentPlayer]} onBuy={buyCard}
+						  onStartSwap={startSwap}/>
+					<Player name="0" G={props.G} ctx={props.ctx} onBuy={buyCard} onStartSwap={startSwap}
+							onEndSwap={endSwap}/>
+					<Player name="1" G={props.G} ctx={props.ctx} onBuy={buyCard} onStartSwap={startSwap}
+							onEndSwap={endSwap}/>
+				</div>
+				<div class="board-sidepanel">
+					<Palette {...props}/>
+				</div>
 			</div>
 		);
 	}
@@ -35,7 +62,8 @@ const Palette = (props) => {
 	let playBlue = !control ? undefined : <button onClick={() => props.moves.playBlueCards()}>Play blue cards</button>;
 	let playGreen = !control ? undefined :
 		<button onClick={() => props.moves.playGreenCards()}>Play green cards</button>;
-	let restartTurn = !control ? undefined : <button onClick={() => props.moves.restartTurn()}>Play another turn</button>;
+	let restartTurn = !control ? undefined :
+		<button onClick={() => props.moves.restartTurn()}>Play another turn</button>;
 	let endTurn = !control ? undefined : <button onClick={() => props.events.endTurn()}>End my turn</button>;
 
 	let title = spectator || !control ? 'Player ' + props.ctx.currentPlayer :
@@ -67,7 +95,7 @@ const Dice = (props) => {
 };
 
 const hasControl = (props) => {
-	return props.isActive || (props.playerID === props.ctx.currentPlayer);
+	return props.isActive === true || (props.playerID === props.ctx.currentPlayer);
 };
 
 const isSpectator = (props) => {
@@ -94,7 +122,13 @@ const Deck = (props) => (
 			className="deck">{
 			Object.keys(props.deck).filter((key) => props.deck[key] > 0)
 				.map(key => {
-					let menuItems = createDeckCardMenu(key, props.currentPlayer, props.currentPlayer.coins >= Cards[key].cost && props.onBuy);
+					let playerCard = props.currentPlayer.deck.find(playerCard => playerCard.card === key && playerCard.enabled !== false);
+					let menuItems = createDeckCardMenu(
+						key,
+						props.currentPlayer,
+						props.currentPlayer.coins >= Cards[key].cost // can afford
+							&& (_.isNil(playerCard) || _.isUndefined(Cards[playerCard.card].maxOwnCount)) // does not own, or owns and can own multiple
+							&& props.onBuy);
 					return (<Card key={key} type={key} menuItems={menuItems}/>)
 				})
 		}</div>
@@ -109,7 +143,9 @@ const Player = (props) => {
 			<div>{
 				player.deck.map((playerCard, idx) => {
 					let key = playerCardKey(props.name, playerCard.card, idx);
-					let menuItems = createPlayerCardMenu(playerCard, player, props.name === props.ctx.currentPlayer && props.onBuy);
+					let menuItems = createPlayerCardMenu(playerCard, props.name, player, props.name === props.ctx.currentPlayer && props.onBuy,
+						props.name === props.ctx.currentPlayer && props.onStartSwap,
+						props.name !== props.ctx.currentPlayer && props.onEndSwap);
 					return <Card key={key} type={playerCard.card}
 								 free={playerCard.free} enabled={playerCard.enabled} menuItems={menuItems}/>
 				})
@@ -119,21 +155,25 @@ const Player = (props) => {
 };
 
 const createDeckCardMenu = (cardType, player, onBuy) => {
-	return createCardMenu(cardType, player, onBuy);
+	return createCardMenu(cardType, undefined, player, onBuy);
 };
 
-const createPlayerCardMenu = (playerCard, player, onBuy) => {
-	return createCardMenu(playerCard.card, player, playerCard.enabled === false && player.coins >= Cards[playerCard.card].cost && onBuy);
+const createPlayerCardMenu = (playerCard, playerId, player, onBuy, onStartSwap, onEndSwap) => {
+	return createCardMenu(playerCard.card, playerId, player, playerCard.enabled === false && player.coins >= Cards[playerCard.card].cost && onBuy, onStartSwap, onEndSwap);
 };
 
-const createCardMenu = (cardType, player, onBuy) => {
-	let menuItems = null;
+const createCardMenu = (cardType, playerId, player, onBuy, onStartSwap, onEndSwap) => {
+	let menuItems = [];
 	if (onBuy) {
-		menuItems = [
-			<li key="buy" onClick={() => onBuy(cardType)}>Buy this card</li>,
-		];
+		menuItems.push(<li key="buy" onClick={() => onBuy(cardType)}>Buy this card</li>)
 	}
-	return menuItems;
+	if (onStartSwap && Cards[cardType].symbol !== 'tower') {
+		menuItems.push(<li key="startSwap" onClick={() => onStartSwap(cardType)}>Swap this card...</li>)
+	}
+	if (onEndSwap && Cards[cardType].symbol !== 'tower') {
+		menuItems.push(<li key="endSwap" onClick={() => onEndSwap(playerId, cardType)}>Swap it!</li>)
+	}
+	return menuItems.length === 0 ? undefined : menuItems;
 };
 
 const playerCardKey = (playerId, card, cardIdx) => "player-" + playerId + "-" + card + "-" + cardIdx;

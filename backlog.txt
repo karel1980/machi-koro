@@ -23,11 +23,11 @@ VI disable roll buttons when appropriate (phase of turn & 2 dice allowed)
 VI Guide user through different phases in turn
 VI Alert player card cannot be bought if not enough coins left (don't show buy button)
 VI Only enable buy menu if can be bought
+GR Yellow card: play another round (having rolled a double)
 
 --- to implement in UI:
 GR Purple cards (swap card with opponent)
 GR Purple cards (point to opponent who has to pay)
-GR Yellow card: play another round (having rolled a double)
 ---
 
 # todo

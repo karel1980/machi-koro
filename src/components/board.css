@@ -1,13 +1,13 @@
-.palette {
-	background: #eee;
-	padding: 2em;
-	width: 400px;
-	height: 300px;
-	position: fixed;
-	right: 1em;
-	z-index: 1000;
+.board-container {
+	display: flex;
+	flex-direction: row;
 }
 
-palette.collapsed .palette-content {
-	display: none;
+.board-main {
+	flex: 3;
+}
+.board-sidepanel {
+	flex: 1;
+	background: #eee;
+	padding: 2em;
 }
