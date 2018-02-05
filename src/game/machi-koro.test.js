@@ -1,13 +1,13 @@
 import {
 	buyCardMove,
+	distributeCoinsMove,
 	INITIAL_DECK,
 	initialPlayer,
 	newTurn,
-	distributeCoinsMove,
 	playRollMove,
 	playSwapCardsMove,
-	collectCoinsFromOpponentMove,
-	restartTurnMove
+	restartTurnMove,
+	takeCoinsFromPlayerMove
 } from './machi-koro';
 
 describe('machi-koro', () => {
@@ -74,20 +74,40 @@ describe('machi-koro', () => {
 
 	describe('distributeCoinsMove', () => {
 		describe('red cards', () => {
-			fit('does nothing when there are no red cards', () => {
+			it('does nothing when there are no red cards', () => {
 				let G = {currentTurn: {numRolls: 1, lastRoll: [1]}, players: [initialPlayer(), initialPlayer()]};
 
 				G = distributeCoinsMove(G, {currentPlayer: 0});
 
 				expect(G.players[0].coins).toEqual(4);
 				expect(G.players[0].coins).toEqual(4);
+				expect(G.currentTurn.changeLog).toEqual([
+					{
+						"amount": 1,
+						"augmentingCards": undefined,
+						"cardType": "graanveld",
+						"from": null,
+						"to": 0,
+						"type": "coinsTransferred"
+					},
+					{
+						"amount": 1,
+						"augmentingCards": undefined,
+						"cardType": "graanveld",
+						"from": null,
+						"to": 1,
+						"type": "coinsTransferred"
+					}
+				]);
 			});
 
 			it('gives coins from player 0 to player 1 when player 1 has a red card and player 0 rolls that value', () => {
-				let G = {currentTurn: {numRolls: 1, lastRoll: [3]}, players: [initialPlayer(), initialPlayer()]};
+				let G = {currentTurn: {numRolls: 0}, players: [initialPlayer(), initialPlayer()], forceRoll: [3]};
+				let ctx = {currentPlayer: 0};
 				G = giveCardToPlayer(G, 'cafe', 1);
+				G = playRollMove(G, ctx);
 
-				G = distributeCoinsMove(G, {currentPlayer: 0});
+				G = distributeCoinsMove(G, ctx);
 
 				expect(G.players[0].coins).toEqual(3);
 				expect(G.players[1].coins).toEqual(4);
@@ -149,7 +169,7 @@ describe('machi-koro', () => {
 
 				G = distributeCoinsMove(G, {currentPlayer: 0});
 
-				expect(G.players[0].coins).toEqual(2);
+				expect(G.players[0].coins).toEqual(2); //+1 for bakery, -2 for cafe + winkelcentrum
 				expect(G.players[1].coins).toEqual(5);
 				expect(G.players[2].coins).toEqual(3);
 			});
@@ -185,6 +205,15 @@ describe('machi-koro', () => {
 				expect(G.players[0].coins).toEqual(4);
 				expect(G.players[1].coins).toEqual(3);
 				expect(G.players[2].coins).toEqual(3);
+
+				expect(G.currentTurn.changeLog).toEqual([{
+					"type": "coinsTransferred",
+					"from": null,
+					"to": 0,
+					"amount": 1,
+					"cardType": "bakkerij",
+					"augmentingCards": []
+				}]);
 			});
 
 			it('gives coins for "modifier" green cards', () => {
@@ -201,7 +230,7 @@ describe('machi-koro', () => {
 
 				G = distributeCoinsMove(G, {currentPlayer: 0});
 
-				expect(G.players[0].coins).toEqual(9);
+				expect(G.players[0].coins).toEqual(9); // 2 wheatfields * 3 payout
 				expect(G.players[1].coins).toEqual(3);
 				expect(G.players[2].coins).toEqual(3);
 			});
@@ -226,11 +255,13 @@ describe('machi-koro', () => {
 		describe('swap card', () => {
 			it('can swap cards', () => {
 				let G = {
-					currentTurn: {numRolls: 1, lastRoll: [6], hasDistributedCoins: true},
-					players: [initialPlayer(), initialPlayer(), initialPlayer()]
+					currentTurn: {numRolls: 0, hasDistributedCoins: true},
+					players: [initialPlayer(), initialPlayer(), initialPlayer()],
+					forceRoll: [6]
 				};
 				let ctx = {currentPlayer: 0};
 				G = giveCardToPlayer(G, 'bedrijvencomplex', 0);
+				G = playRollMove(G, ctx);
 				G = playSwapCardsMove(G, ctx, 1, 'bakkerij', 'graanveld');
 
 				expect(countCard(G.players[0].deck, 'bakkerij')).toBe(0);
@@ -353,14 +384,17 @@ describe('machi-koro', () => {
 		it('allows the player to collect coins from a specific player', () => {
 			let G = {
 				deck: INITIAL_DECK,
-				currentTurn: {numRolls: 1, lastRoll: [6], hasDistributedCoins: true},
-				players: [initialPlayer(), initialPlayer(), initialPlayer()]
+				currentTurn: {numRolls: 0, hasDistributedCoins: true},
+				players: [initialPlayer(), initialPlayer(), initialPlayer()],
+				forceRoll: [6]
 			};
+			let ctx = {currentPlayer: 0};
 			G = giveCardToPlayer(G, 'tvstation', 0);
 			G = setPlayerCoins(G, 0, 100);
 			G = setPlayerCoins(G, 1, 100);
+			G = playRollMove(G, ctx);
 
-			G = collectCoinsFromOpponentMove(G, {currentPlayer: 0}, 1);
+			G = takeCoinsFromPlayerMove(G, ctx, 1);
 
 			expect(G.players[0].coins).toEqual(106);
 			expect(G.players[1].coins).toEqual(94);
@@ -412,6 +446,40 @@ describe('machi-koro', () => {
 
 			expect(G.currentTurn.numRolls).toBe(1);
 			expect(G.currentTurn.lastRoll).toEqual([3, 3]);
+		});
+	});
+
+	describe('takeFromPlayer', () => {
+		it('allows taking from selected player', () => {
+			let G = { players: [initialPlayer(), initialPlayer(), initialPlayer()], forceRoll: [6], currentTurn: { numRolls: 0 , hasDistributedCoins: true, changeLog: []}};
+			let ctx = { currentPlayer: 0 };
+			G = giveCardToPlayer(G, 'tvstation', 0);
+			G = setPlayerCoins(G, 1, 100);
+			G = playRollMove(G, ctx);
+
+			G = takeCoinsFromPlayerMove(G, ctx, 1, 'tvstation');
+
+			expect(G.players[0].coins).toEqual(9);
+			expect(G.players[1].coins).toEqual(94);
+			expect(G.players[2].coins).toEqual(3);
+
+			expect(G.currentTurn.changeLog).toEqual([
+				{"amount": 6, "augmentingCards": undefined, "cardType": "tvstation", "from": 0, "to": 1, "type": "coinsTransferred"}
+			]);
+		});
+
+		it('does not take more than the selected player has', () => {
+			let G = { players: [initialPlayer(), initialPlayer(), initialPlayer()], forceRoll: [6], currentTurn: { numRolls: 0 , hasDistributedCoins: true, changeLog: []}};
+			let ctx = { currentPlayer: 0 };
+			G = giveCardToPlayer(G, 'tvstation', 0);
+			G = playRollMove(G, ctx);
+
+			G = takeCoinsFromPlayerMove(G, ctx, 1, 'tvstation');
+
+			expect(G.players[0].coins).toEqual(6);
+			expect(G.players[1].coins).toEqual(0);
+			expect(G.players[2].coins).toEqual(3);
+			expect(G.currentTurn.changeLog).toEqual([{"amount": 3, "augmentingCards": undefined, "cardType": "tvstation", "from": 0, "to": 1, "type": "coinsTransferred"}]);
 		});
 	});
 

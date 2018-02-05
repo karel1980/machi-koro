@@ -12,7 +12,7 @@ import _ from 'lodash';
 import update from 'immutability-helper';
 
 export const initialPlayer = () => ({
-	coins: 3,
+	coins: 300,
 	deck: initialPlayerDeck()
 });
 
@@ -46,7 +46,7 @@ export const INITIAL_DECK = {
 const newTurn = () => ({
 	numRolls: 0,
 	lastRoll: undefined,
-	questions: []
+	changeLog: []
 });
 
 const MachiKoro = Game({
@@ -59,6 +59,7 @@ const MachiKoro = Game({
 			initialPlayer()
 		],
 		currentTurn: newTurn(),
+		forceRoll: [6]
 	}),
 
 	moves: {
@@ -66,7 +67,8 @@ const MachiKoro = Game({
 		distributeCoins: distributeCoinsMove,
 		buyCard: buyCardMove,
 		swapCards: playSwapCardsMove,
-		restartTurn: restartTurnMove
+		restartTurn: restartTurnMove,
+		takeCoinsFromPlayer: takeCoinsFromPlayerMove
 	},
 
 	flow: {
@@ -77,6 +79,8 @@ const MachiKoro = Game({
 		endGameIf: (G, ctx) => {
 			//if (a player has all orange class cards) return that player;
 		},
+
+		//TODO: REVIEW RULES: is buying a card always the last actions -> automatically end turn? => implement via endTurnIf?
 	},
 });
 
@@ -100,17 +104,37 @@ export function playRollMove(G, ctx, numDice) {
 	if (!_.isUndefined(G.forceRoll)) { // for testing
 		roll = G.forceRoll;
 	} else {
-		roll.push(doRoll())
+		roll.push(doRoll());
 		if (numDice === 2) {
 			roll.push(doRoll());
 		}
 	}
 
 	let player = G.players[ctx.currentPlayer];
-	let canRestart = !_.isNil(player.deck.find(playerCard => playerCard.enabled !== false && Cards[playerCard.card].allowAnotherTurnOnDoubleThrow))
-			&& roll.length === 2 && roll[0] === roll[1];
 
-	return {...G, currentTurn: {...G.currentTurn, canRestart: canRestart, numRolls: G.currentTurn.numRolls + 1, lastRoll: roll }};
+	let activeCards = getActiveCards(player.deck, roll);
+
+	let canRestart = !_.isNil(activeCards.find(cardType => Cards[cardType].allowAnotherTurnOnDoubleThrow))
+		&& roll.length === 2 && roll[0] === roll[1];
+
+	let currentTurn = {
+		...G.currentTurn,
+		activeCards,
+		canRestart,
+		numRolls: G.currentTurn.numRolls + 1,
+		lastRoll: roll
+	};
+
+	return {
+		...G,
+		currentTurn: currentTurn
+	};
+}
+
+export function getActiveCards(playerDeck, roll) {
+	return playerDeck.filter(playerCard => playerCard.enabled !== false)
+		.map(playerCard => playerCard.card)
+		.filter(cardType => _.isNil(Cards[cardType].roll) || cardTypeRollMatcher(roll)(cardType));
 }
 
 // exported for testing
@@ -125,7 +149,7 @@ export function playSwapCardsMove(G, ctx, victim, cardToGive, cardToTake) {
 		return G;
 	}
 
-	let cardAllowingSwapping = _.find(G.players[ctx.currentPlayer].deck.filter(playerCardRollMatcher(G.currentTurn.lastRoll)), playerCard => Cards[playerCard.card].allowSwapping);
+	let cardAllowingSwapping = G.currentTurn.activeCards.find(cardType => Cards[cardType].allowSwapping);
 	if (_.isNil(cardAllowingSwapping)) {
 		// player does not have card allowing to swap
 		return G;
@@ -207,7 +231,7 @@ export const playerCanRollWith2Dice = (player) => {
 };
 
 export function distributeCoinsMove(G, ctx) {
-	if (G.currentTurn.numRolls == 0) {
+	if (G.currentTurn.numRolls === 0) {
 		return G; // must roll first
 	}
 
@@ -216,15 +240,17 @@ export function distributeCoinsMove(G, ctx) {
 	}
 
 	G = distributeCoinsForRedCards(G, ctx);
-	G = distributeCoinsForBlueCards(G, ctx);
+	G = distributeCoinsForBlueCards(G);
 	G = distributeCoinsForGreenCards(G, ctx);
 
-	return {...G, currentTurn: {...G.currentTurn, hasDistributedCoins: true }};
+	return {...G, currentTurn: {...G.currentTurn, hasDistributedCoins: true}};
 }
 
 export function distributeCoinsForRedCards(G, ctx) {
 	// start at currentPlayer - 1, go down and stop before currentPlayer
 	let coins = G.players.map(p => p.coins);
+
+	let changeLog = [];
 	for (let i = 0; i < G.players.length - 1; i++) {
 		if (coins[ctx.currentPlayer] <= 0) {
 			break;
@@ -232,12 +258,15 @@ export function distributeCoinsForRedCards(G, ctx) {
 
 		let playerIdx = (2 * G.players.length + ctx.currentPlayer - i - 1) % G.players.length;
 		let player = G.players[playerIdx];
-		for (let playerCard of player.deck.filter(playerCardCategoryAndRollMatcher('red', G.currentTurn.lastRoll))) {
-			let opponentCard = Cards[playerCard.card];
+		for (let cardType of getActiveCards(player.deck, G.currentTurn.lastRoll).filter(cardType => Cards[cardType].category === 'red')) {
 			if (coins[ctx.currentPlayer] <= 0) {
+				changeLog.push(coinTransferStopped(ctx.currentPlayer, playerIdx, cardType));
 				break;
 			}
-			let payout = Math.min(coins[ctx.currentPlayer], opponentCard.payout + getPaymentIncrementsForCard(player.deck, opponentCard));
+			let opponentCard = Cards[cardType];
+			let opponentCardAugmenters = getAugmentingCards(player.deck, G.currentTurn.lastRoll, cardType);
+			let payout = Math.min(coins[ctx.currentPlayer], opponentCard.payout + opponentCardAugmenters.map(cardType => Cards[cardType].paymentIncreaseBy).reduce(sumReducer, 0));
+			changeLog.push(coinsTransferred(ctx.currentPlayer, playerIdx, cardType, payout, opponentCardAugmenters));
 
 			coins[ctx.currentPlayer] -= payout;
 			coins[playerIdx] += payout;
@@ -245,52 +274,72 @@ export function distributeCoinsForRedCards(G, ctx) {
 	}
 
 	let players = G.players.map((player, idx) => ({...player, coins: coins[idx]}));
-	return {...G, players};
+	return {...G, currentTurn: appendChangeLog(G.currentTurn, changeLog), players};
 }
 
-export function distributeCoinsForBlueCards(G, ctx) {
-	let players = G.players.map(p => {
-		return ({
-			...p,
-			coins: p.coins + p.deck.filter(playerCardCategoryAndRollMatcher('blue', G.currentTurn.lastRoll))
-				.map(playerCard => Cards[playerCard.card].payout)
-				.reduce(sumReducer, 0)
-		});
-	});
+const coinTransferStopped = (from, to, cardType) => ({type: 'coinTransferStopped', from, to, cardType});
+const coinsTransferred = (from, to, cardType, amount, augmentingCards) => ({
+	type: 'coinsTransferred',
+	from,
+	to,
+	cardType,
+	amount,
+	augmentingCards
+});
+const appendChangeLog = (turn, entries) => ({
+	...turn,
+	changeLog: _.isNil(turn.changeLog) ? entries : turn.changeLog.concat(entries)
+});
 
-	return {...G, players};
+export function distributeCoinsForBlueCards(G) {
+	let transfersPerPlayer = G.players.map((player, playerIdx) => {
+		return getActiveCards(player.deck, G.currentTurn.lastRoll).filter(cardType => Cards[cardType].category === 'blue')
+			.map(cardType => coinsTransferred(null, playerIdx, cardType, Cards[cardType].payout))});
+	let currentTurn = appendChangeLog(G.currentTurn, _.flatten(transfersPerPlayer));
+	let players = _.zipWith(G.players, transfersPerPlayer, (player, transfers) => ({
+		...player,
+		coins: player.coins + transfers
+			.map(transfer => transfer.amount)
+			.reduce(sumReducer, 0)
+	}));
+	return {...G, currentTurn, players};
 }
 
 const sumReducer = (acc, current) => acc + current;
 
-const getPaymentIncrementsForCard = (playerDeck, card) => {
-	return playerDeck.filter((cas) => cas.enabled)
-		.map(cas => Cards[cas.card])
-		.filter(playerCard => !_.isNil(playerCard.paymentIncreaseBy))
-		.filter(incrementingCard => _.some(incrementingCard.paymentIncreaseForSymbols, (symbol) => card.symbol === symbol))
-		.map(incrementingCard => incrementingCard.paymentIncreaseBy)
-		.reduce(sumReducer, 0);
+const getAugmentingCards = (playerDeck, roll, cardType) => {
+	return getActiveCards(playerDeck, roll)
+		.filter(playerCardType => !_.isNil(Cards[playerCardType].paymentIncreaseBy))
+		.filter(playerCardType => _.some(Cards[playerCardType].paymentIncreaseForSymbols, (symbol) => Cards[cardType].symbol === symbol))
 };
 
 export function distributeCoinsForGreenCards(G, ctx) {
-	let current = {...G.players[ctx.currentPlayer]};
+	let currentPlayer = {...G.players[ctx.currentPlayer]};
 	let players = [...G.players];
-	players[ctx.currentPlayer] = current;
+	players[ctx.currentPlayer] = currentPlayer;
 
-	let activeGreenCards = current.deck.filter(playerCardCategoryAndRollMatcher('green', G.currentTurn.lastRoll))
-		.map(playerCard => Cards[playerCard.card]);
+	let activeGreenCards = getActiveCards(currentPlayer.deck, G.currentTurn.lastRoll)
+		.filter(cardType => Cards[cardType].category === 'green');
 
-	let simpleGreenCards = activeGreenCards.filter((card) => _.isNil(card.payoutFor));
-	current.coins += simpleGreenCards.map(card => {
-		return card.payout + getPaymentIncrementsForCard(current.deck, card)
-	}).reduce(sumReducer, 0);
+	let simpleGreenCards = activeGreenCards.filter((cardType) => _.isNil(Cards[cardType].payoutFor));
 
-	let modifierCards = activeGreenCards.filter((card) => !_.isNil(card.payoutFor));
-	modifierCards.forEach((modifier) => {
-		current.coins += modifier.payout * current.deck.filter((card) => Cards[card.card].symbol === modifier.payoutFor).length;
+	let transfers = simpleGreenCards.map(cardType => {
+		let augmentingCards = getAugmentingCards(currentPlayer.deck, G.currentTurn.lastRoll, cardType);
+		let extraIncome = augmentingCards.map(cardType => Cards[cardType].paymentIncreaseBy)
+			.reduce(sumReducer, 0);
+
+		return coinsTransferred(null, ctx.currentPlayer, cardType, Cards[cardType].payout + extraIncome, augmentingCards)
+	});
+	currentPlayer.coins += transfers.map(transfer => transfer.amount).reduce(sumReducer, 0);
+
+	let modifierCards = activeGreenCards.filter((cardType) => !_.isNil(Cards[cardType].payoutFor));
+	modifierCards.forEach((cardType) => {
+		let amount = Cards[cardType].payout * currentPlayer.deck.filter((card) => Cards[card.card].symbol === Cards[cardType].payoutFor).length;
+		currentPlayer.coins += amount;
+		transfers = transfers.concat(coinsTransferred(null, ctx.currentPlayer, cardType, amount));
 	});
 
-	return {...G, players};
+	return {...G, currentTurn: appendChangeLog(G.currentTurn, transfers), players};
 }
 
 export function buyCardMove(G, ctx, cardType) {
@@ -376,13 +425,9 @@ function playerCardWithType(cardType) {
 	return (playerCard => playerCard.card === cardType);
 }
 
-const playerCardCategoryAndRollMatcher = (category, roll) => {
-	return playerCard => Cards[playerCard.card].category === category && playerCardRollMatcher(roll)(playerCard);
-};
-
-export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
-	if (G.currentTurn.hasCollectedFromOpponent) {
-		// can collect only once
+export function takeCoinsFromPlayerMove(G, ctx, opponentId) {
+	if (G.currentTurn.hasTakenFromPlayer) {
+		// can take only once
 		return G;
 	}
 
@@ -391,10 +436,9 @@ export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
 		return G;
 	}
 
-	let cardAllowingCollecting = _.find(G.players[ctx.currentPlayer].deck.filter(playerCardRollMatcher(G.currentTurn.lastRoll)), playerCard => Cards[playerCard.card].collectFromSelectedPlayer)
+	const takingCard = G.currentTurn.activeCards.find(cardType => Cards[cardType].collectFromSelectedPlayer);
 
-	if (_.isNil(cardAllowingCollecting)) {
-		// player is not allowed to collect
+	if (_.isNil(takingCard)) {
 		return G;
 	}
 
@@ -406,30 +450,31 @@ export function collectCoinsFromOpponentMove(G, ctx, opponentId) {
 	let players = [...G.players];
 	let player = {...players[ctx.currentPlayer]};
 	let opponent = {...players[Number(opponentId)]};
-	let amount = Math.min(opponent.coins, Cards[cardAllowingCollecting.card].payout);
+	let amount = Math.min(opponent.coins, Cards[takingCard].payout);
 
 	player.coins += amount;
 	opponent.coins -= amount;
 
+	let transfer = coinsTransferred(ctx.currentPlayer, opponentId, takingCard, amount, undefined);
+
 	players[ctx.currentPlayer] = player;
 	players[Number(opponentId)] = opponent;
 
-	return {...G, players, currentTurn: {...G.currentTurn, hasCollectedFromOpponent: true}}
+	return {...G, players, currentTurn: appendChangeLog({...G.currentTurn, hasTakenFromPlayer: true}, [transfer])};
 }
 
-export function restartTurnMove(G, ctx) {
+export function restartTurnMove(G) {
 	if (G.currentTurn.hasDistributedCoins && G.currentTurn.canRestart) {
-		return { ...G, currentTurn: newTurn() };
+		return {...G, currentTurn: newTurn()};
 	}
 
 	return G;
 }
 
-export const playerCardRollMatcher = (roll) => {
-	return ({card}) => {
+export const cardTypeRollMatcher = (roll) => {
+	return (cardType) => {
 		let rolled = roll.reduce(sumReducer, 0);
-
-		let range = cardRange(Cards[card]);
+		let range = cardRange(Cards[cardType]);
 
 		return rolled >= range.min && rolled <= range.max;
 	}

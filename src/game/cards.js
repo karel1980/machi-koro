@@ -1,6 +1,5 @@
 export const Cards = {
 	"pretpark": {
-		"roll": "0",
 		"category": "yellow",
 		"name": "Pretpark",
 		"cost": 16,
@@ -11,7 +10,6 @@ export const Cards = {
 	},
 	"treinstation": {
 		"cost": 4,
-		"roll": "0",
 		"name": "Treinstation",
 		"category": "yellow",
 		"description": "Je mag met twee dobbelstenen gooien.",
@@ -20,7 +18,6 @@ export const Cards = {
 		"canRollWith2Dice": true
 	},
 	"winkelcentrum": {
-		"roll": "0",
 		"symbol": "tower",
 		"cost": 10,
 		"name": "Winkelcentrum",
@@ -35,7 +32,6 @@ export const Cards = {
 		"category": "yellow",
 		"name": "Radiostation",
 		"description": "Je mag je dobbelstenen eenmaal per beurt opnieuw gooien.",
-		"roll": "0",
 		"symbol": "tower",
 		"reRoll": true,
 		"maxOwnCount": 1
@@ -150,6 +146,7 @@ export const Cards = {
 		"cost": 6,
 		"description": "Ontvang 2 munten van iedere speler als het jouw beurt is.",
 		"payout": 2,
+		"payoutFromEveryone": true,
 		"maxOwnCount": 1
 	},
 	"mijn": {

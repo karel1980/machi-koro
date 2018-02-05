@@ -3,14 +3,14 @@ import React from 'react';
 import {Card} from './card';
 import './board.css';
 import * as _ from 'lodash';
-import {allowedNumberOfRolls, playerCanRollWith2Dice, playerCardRollMatcher} from "../game/machi-koro";
+import {allowedNumberOfRolls, playerCanRollWith2Dice} from "../game/machi-koro";
 import {Cards} from '../game/cards';
 
 export class Board extends React.Component {
 
 	state = {
 		firstToSwap: undefined
-	}
+	};
 
 	startSwap(cardType) {
 		this.setState({...this.state, firstToSwap: cardType});
@@ -24,30 +24,49 @@ export class Board extends React.Component {
 		let canSwap = hasControl(props)
 			&& !props.G.currentTurn.hasSwappedCards
 			&& props.G.currentTurn.hasDistributedCoins
-			&& !_.isNil(props.G.players[props.ctx.currentPlayer].deck
-				.filter(playerCardRollMatcher(props.G.currentTurn.lastRoll))
-				.find(playerCard => playerCard.enabled !== false && Cards[playerCard.card].allowSwapping));
+			&& !_.isNil(props.G.currentTurn.activeCards
+				.find(cardType => Cards[cardType].allowSwapping));
 
 		let startSwap = canSwap ? (cardType) => this.startSwap(cardType) : undefined;
 		let endSwap = (canSwap && !_.isNil(this.state.firstToSwap)) ? (victim, cardType) => {
 			props.moves.swapCards(victim, this.state.firstToSwap, cardType);
 			this.setState({...this.state, firstToSwap: undefined});
 		} : undefined;
+
+		let takeCoins = undefined;
+		if (props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.hasTakenFromPlayer && !_.isNil((props.G.currentTurn.activeCards || []).find(cardType => Cards[cardType].collectFromSelectedPlayer))) {
+			takeCoins = (playerId) => props.moves.takeCoinsFromPlayer(playerId);
+		}
+
 		return (
-			<div class="board-container">
-				<div class="board-main">
+			<div className="board-container">
+				<div className="board-main">
 					<Deck deck={props.G.deck} currentPlayer={props.G.players[props.ctx.currentPlayer]} onBuy={buyCard}
 						  onStartSwap={startSwap}/>
 					<Player name="0" G={props.G} ctx={props.ctx} onBuy={buyCard} onStartSwap={startSwap}
-							onEndSwap={endSwap}/>
+							onEndSwap={endSwap} takeCoins={takeCoins}/>
 					<Player name="1" G={props.G} ctx={props.ctx} onBuy={buyCard} onStartSwap={startSwap}
-							onEndSwap={endSwap}/>
+							onEndSwap={endSwap} takeCoins={takeCoins}/>
 				</div>
-				<div class="board-sidepanel">
+				<div className="board-sidepanel">
 					<Palette {...props}/>
+					<div>
+						{props.G.currentTurn.changeLog.map((event, idx) => <Event key={`changelog-entry-${idx}`} {...event}/>)}
+					</div>
 				</div>
 			</div>
 		);
+	}
+}
+
+const Event = (props) => {
+	switch (props.type) {
+		case 'coinsTransferred':
+			return <div>Player {props.to} received {props.amount} from {_.isNil(props.from) ? 'the bank' : `Player ${props.from}`} ({props.cardType})</div>;
+		case 'coinsTransferStopped':
+			return <div>Player {props.from} is broke, cannot give coins to {props.to} ({props.cardType})</div>;
+		default:
+			return <div>Unknown event: {JSON.stringify(props)}</div>;
 	}
 };
 
@@ -74,6 +93,7 @@ const Palette = (props) => {
 
 	return (<div className="palette">
 		<h3>{title} {rolled}</h3>
+		<div>{props.G.currentTurn.activeCards}</div>
 		<div>
 			{showRollButton(props) ? roll1 : undefined}
 			{showRoll2Button(props) ? roll2 : undefined}
@@ -134,7 +154,7 @@ const Player = (props) => {
 	let player = props.G.players[props.name];
 	return (
 		<div style={{textAlign: 'center'}}>
-			<h2>Player {props.name} (Coins: {player.coins})</h2>
+			<h2>Player {props.name} (Coins: {player.coins}) {props.takeCoins && props.name !== props.ctx.currentPlayer && <button onClick={() => props.takeCoins(props.name)}>Take coins (max 6)</button>}</h2>
 			<div>{
 				player.deck.map((playerCard, idx) => {
 					let key = playerCardKey(props.name, playerCard.card, idx);
