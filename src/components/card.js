@@ -8,7 +8,7 @@ import {SingleCoin} from "./coins";
 export class Card extends React.Component {
 
 	render() {
-		let {type, free, enabled, menuItems} = this.props;
+		let {type, free, enabled, menuItems, count} = this.props;
 		let card = Cards[type];
 
 		let menu = <span>&nbsp;</span>;
@@ -28,7 +28,7 @@ export class Card extends React.Component {
 		}
 
 		return (
-			<div className={cardClassNames(card, enabled, hasMenu)}>
+			<div className={cardClassNames(card, enabled, hasMenu, count)}>
 				<div className="card-top">
 					<div className="roll">{rollDisplayString(card.roll)}</div>
 					<div className="label">
@@ -54,9 +54,9 @@ const rollDisplayString = value => value === undefined ? (<span>&nbsp;</span>) :
 
 const costDisplayString = (value, free) => free ? (<span>&nbsp;</span>) : value;
 
-const cardClassNames = (card, enabled, highlight) => {
+const cardClassNames = (card, enabled, highlight, count) => {
 	let suffix = enabled === false ? 'disabled' : card.category;
 	let highlightClass = highlight ? 'highlight' : '';
-
-	return `card card-${suffix} ${highlightClass}`;
+	let multiple = count > 1 ? 'multiple' : '';
+	return `card card-${suffix} ${highlightClass} ${multiple}`;
 };

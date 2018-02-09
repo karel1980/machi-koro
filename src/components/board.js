@@ -111,11 +111,9 @@ const Palette = (props) => {
 					<div>
 						<SelectOpponent players={props.G.players} ctx={props.ctx} onSelected={(playerId) => props.moves.takeCoinsFromPlayer(playerId)} enabled={canTakeCoinsFromOnePlayer}/>
 					</div>
-				</div>
-				<div className="action-take-coins">
 					<div>Take coins from everyone</div>
 					<div>
-						<SelectOpponent players={props.G.players} ctx={props.ctx} onSelected={(playerId) => props.moves.takeCoinsFromAllPlayers(playerId)} enabled={canTakeCoinsFromAllPlayers}/>
+						<button onClick={() => props.moves.takeCoinsFromAllPlayers()} disabled={!canTakeCoinsFromAllPlayers}>Take them coins</button>
 					</div>
 				</div>
 				<div className="action-buy-card">
@@ -215,17 +213,22 @@ const Deck = (props) => (
 
 const Player = (props) => {
 	let player = props.G.players[props.name];
+	let playerCardsByCardType = _.groupBy(player.deck, (playerCard) => playerCard.card);
+	let cardsAndCounts = Object.keys(playerCardsByCardType)
+		.map(cardType => ({ ...playerCardsByCardType[cardType][0], count: playerCardsByCardType[cardType].length }))
+		.sort((pcc1, pcc2) => compareRollAndCost(pcc1.card, pcc2.card));
+
 	return (
 		<div style={{textAlign: 'center'}}>
 			<h2>Player {props.name} (Coins: {player.coins})</h2>
 			<div>{
-				player.deck.sort((pc1, pc2) => compareRollAndCost(pc1.card, pc2.card)).map((playerCard, idx) => {
-					let key = playerCardKey(props.name, playerCard.card, idx);
-					let menuItems = createPlayerCardMenu(playerCard, props.name, player, props.name === props.ctx.currentPlayer && props.onBuy,
+				cardsAndCounts.map((playerCardAndCount, idx) => {
+					let key = playerCardKey(props.name, playerCardAndCount.card, idx);
+					let menuItems = createPlayerCardMenu(playerCardAndCount, props.name, player, props.name === props.ctx.currentPlayer && props.onBuy,
 						props.name === props.ctx.currentPlayer && props.onStartSwap,
 						props.name !== props.ctx.currentPlayer && props.onEndSwap);
-					return <Card key={key} type={playerCard.card}
-								 free={playerCard.free} enabled={playerCard.enabled} menuItems={menuItems}/>
+					return <Card key={key} type={playerCardAndCount.card}
+								 free={false} enabled={playerCardAndCount.enabled} menuItems={menuItems} count={playerCardAndCount.count}/>
 				})
 			}</div>
 		</div>

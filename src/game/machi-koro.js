@@ -12,7 +12,7 @@ import _ from 'lodash';
 import update from 'immutability-helper';
 
 export const initialPlayer = () => ({
-	coins: 3,
+	coins: 300,
 	deck: initialPlayerDeck()
 });
 

@@ -42,34 +42,36 @@ body {
 @keyframes shrink {
 	0% {
 		transform: scale(1.05);
-		box-shadow: 0px 0px 50px #000000;
 		z-index: 10;
 	}
 	100% {
 		transform: scale(1.0);
-		box-shadow: 0px 0px 0px #000000;
 		z-index: 1;
 	}
 }
 
+.card.multiple {
+	box-shadow: 1em 1em 1em;
+}
+
 .card.card-yellow {
-	background: #ffc;
+	background: yellow;
 }
 
 .card.card-blue {
-	background: lightblue;
+	background: deepskyblue;
 }
 
 .card.card-purple {
-	background: #fcf;
+	background: mediumpurple;
 }
 
 .card.card-green {
-	background: lightgreen;
+	background: limegreen;
 }
 
 .card.card-red {
-	background: #f66;
+	background: orangered;
 }
 
 .card-top {
