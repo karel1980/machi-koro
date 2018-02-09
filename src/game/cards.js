@@ -1,3 +1,6 @@
+import * as _ from "lodash";
+import {cardRange} from "./machi-koro";
+
 export const Cards = {
 	"pretpark": {
 		"category": "yellow",
@@ -180,4 +183,49 @@ export const Cards = {
 		"allowSwapping": true,
 		"excludedSymbols": ["tower"]
 	}
+};
+
+
+export const compareRoll = (cardType1, cardType2) => {
+	let card1 = Cards[cardType1];
+	let roll1 = card1.roll;
+	let card2 = Cards[cardType2];
+	let roll2 = card2.roll;
+
+	if (roll1 === roll2) {
+		return 0;
+	}
+
+	if (_.isUndefined(roll1)) {
+		return 1;
+	}
+	if (_.isUndefined(roll2)) {
+		return -1;
+	}
+
+	let range1 = cardRange(card1);
+	let range2 = cardRange(card2);
+
+	if (range1.min === range2.min) {
+		return range1.max === range2.max ? 0 :
+			range1.max < range2.max ? -1 : 1;
+	}
+
+	return range1.min < range2.min ? -1 : 1;
+};
+
+export const compareRollAndCost = (cardType1, cardType2) => {
+	let rollCompare = compareRoll(cardType1, cardType2);
+	if (rollCompare !== 0) {
+		return rollCompare;
+	}
+
+	let cost1 = Cards[cardType1].cost;
+	let cost2 = Cards[cardType2].cost;
+
+	if (cost1 === cost2) {
+		return 0;
+	}
+
+	return cost1 < cost2 ? -1 : 1;
 };

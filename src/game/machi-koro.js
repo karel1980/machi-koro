@@ -520,7 +520,7 @@ export const cardTypeRollMatcher = (roll) => {
 	}
 };
 
-const cardRange = (card) => {
+export const cardRange = (card) => {
 	let rollSpec = card.roll;
 
 	if (_.isNaN(Number(rollSpec))) {

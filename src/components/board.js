@@ -4,7 +4,7 @@ import {Card} from './card';
 import './board.css';
 import * as _ from 'lodash';
 import {allowedNumberOfRolls, playerCanRollWith2Dice} from "../game/machi-koro";
-import {Cards} from '../game/cards';
+import {Cards, compareRollAndCost} from '../game/cards';
 import {Dice} from "./dice";
 import {DropdownMenu} from "react-dd-menu";
 
@@ -198,6 +198,7 @@ const Deck = (props) => (
 		<div
 			className="deck">{
 			Object.keys(props.deck).filter((key) => props.deck[key] > 0)
+				.sort((cardType1, cardType2) => compareRollAndCost(cardType1, cardType2))
 				.map(key => {
 					let playerCard = props.currentPlayer.deck.find(playerCard => playerCard.card === key && playerCard.enabled !== false);
 					let menuItems = createDeckCardMenu(
@@ -218,7 +219,7 @@ const Player = (props) => {
 		<div style={{textAlign: 'center'}}>
 			<h2>Player {props.name} (Coins: {player.coins})</h2>
 			<div>{
-				player.deck.map((playerCard, idx) => {
+				player.deck.sort((pc1, pc2) => compareRollAndCost(pc1.card, pc2.card)).map((playerCard, idx) => {
 					let key = playerCardKey(props.name, playerCard.card, idx);
 					let menuItems = createPlayerCardMenu(playerCard, props.name, player, props.name === props.ctx.currentPlayer && props.onBuy,
 						props.name === props.ctx.currentPlayer && props.onStartSwap,
