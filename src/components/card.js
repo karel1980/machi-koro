@@ -3,6 +3,7 @@ import './card.css';
 import {DropdownMenu} from 'react-dd-menu';
 import {Cards} from '../game/cards';
 import * as _ from 'lodash';
+import {SingleCoin} from "./coins";
 
 export class Card extends React.Component {
 
@@ -40,7 +41,7 @@ export class Card extends React.Component {
 					<div className="description">{card.description}</div>
 				</div>
 				<div className="card-bottom">
-					<div className="cost">{costDisplayString(card.cost, free)}</div>
+					<div className="cost"><SingleCoin value={costDisplayString(card.cost, free)}/></div>
 				</div>
 			</div>
 		);

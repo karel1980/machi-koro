@@ -5,6 +5,8 @@ import './board.css';
 import * as _ from 'lodash';
 import {allowedNumberOfRolls, playerCanRollWith2Dice} from "../game/machi-koro";
 import {Cards} from '../game/cards';
+import {Dice} from "./dice";
+import {DropdownMenu} from "react-dd-menu";
 
 export class Board extends React.Component {
 
@@ -33,26 +35,18 @@ export class Board extends React.Component {
 			this.setState({...this.state, firstToSwap: undefined});
 		} : undefined;
 
-		let takeCoins = undefined;
-		if (props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.hasTakenFromPlayer && !_.isNil((props.G.currentTurn.activeCards || []).find(cardType => Cards[cardType].collectFromSelectedPlayer))) {
-			takeCoins = (playerId) => props.moves.takeCoinsFromPlayer(playerId);
-		}
-
 		return (
 			<div className="board-container">
 				<div className="board-main">
 					<Deck deck={props.G.deck} currentPlayer={props.G.players[props.ctx.currentPlayer]} onBuy={buyCard}
 						  onStartSwap={startSwap}/>
 					<Player name="0" G={props.G} ctx={props.ctx} onBuy={buyCard} onStartSwap={startSwap}
-							onEndSwap={endSwap} takeCoins={takeCoins}/>
+							onEndSwap={endSwap}/>
 					<Player name="1" G={props.G} ctx={props.ctx} onBuy={buyCard} onStartSwap={startSwap}
-							onEndSwap={endSwap} takeCoins={takeCoins}/>
+							onEndSwap={endSwap}/>
 				</div>
 				<div className="board-sidepanel">
 					<Palette {...props}/>
-					<div>
-						{props.G.currentTurn.changeLog.map((event, idx) => <Event key={`changelog-entry-${idx}`} {...event}/>)}
-					</div>
 				</div>
 			</div>
 		);
@@ -75,12 +69,11 @@ const Palette = (props) => {
 	let control = hasControl(props);
 	let spectator = isSpectator(props);
 
-	let roll1 = !control ? undefined : <button onClick={() => props.moves.roll(1)}>Roll with 1 die</button>;
-	let roll2 = !control ? undefined : <button onClick={() => props.moves.roll(2)}>Roll with 2 dice</button>;
-	let distributeCoins = !control ? undefined : <button onClick={() => props.moves.distributeCoins()}>Distribute coins</button>;
-	let restartTurn = !control ? undefined :
-		<button onClick={() => props.moves.restartTurn()}>Play another turn</button>;
-	let endTurn = !control ? undefined : <button onClick={() => props.events.endTurn()}>End my turn</button>;
+	let canRoll1Dice = canRollWithDice(props, 1);
+	let canRoll2Dice = canRollWithDice(props, 2);
+	let canDistributeCoins = control && props.G.currentTurn.numRolls > 0 && !props.G.currentTurn.hasDistributedCoins;
+	let canRestartTurn = control && !_.isNil((props.G.currentTurn.activeCards || []).find(cardType => Cards[cardType].reRoll));
+	let canEndTurn = control && props.G.currentTurn.hasDistributedCoins;
 
 	let title = spectator || !control ? 'Player ' + props.ctx.currentPlayer :
 		control && !props.isActive ? 'Your turn' : 'Player ' + props.ctx.currentPlayer;
@@ -89,24 +82,99 @@ const Palette = (props) => {
 	title += ` (Coins: ${currentPlayer.coins})`;
 
 	let rolled = props.G.currentTurn.numRolls === 0 ? '' :
-		<span>...rolled <Dice values={props.G.currentTurn.lastRoll}/></span>;
+		<div><Dice values={props.G.currentTurn.lastRoll}/></div>;
 
-	return (<div className="palette">
-		<h3>{title} {rolled}</h3>
-		<div>{props.G.currentTurn.activeCards}</div>
-		<div>
-			{showRollButton(props) ? roll1 : undefined}
-			{showRoll2Button(props) ? roll2 : undefined}
-			{props.G.currentTurn.numRolls > 0 && !props.G.currentTurn.hasDistributedCoins ? distributeCoins : undefined}
-			{props.G.currentTurn.hasDistributedCoins && props.G.currentTurn.canRestart ? restartTurn : undefined}
-			{props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.canRestart ? endTurn : undefined}
+	let canTakeCoinsFromOnePlayer = control && props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.hasTakenFromPlayer && !_.isNil((props.G.currentTurn.activeCards || []).find(cardType => Cards[cardType].collectFromSelectedPlayer));
+	let canTakeCoinsFromAllPlayers = control && props.G.currentTurn.hasDistributedCoins && !props.G.currentTurn.hasTakenFromAllPlayers && !_.isNil((props.G.currentTurn.activeCards || []).find(cardType => Cards[cardType].payoutFromEveryone));
+
+	return (<div>
+		<div className="palette">
+			<h3>{title}</h3>
+			<div className="actions">
+				<div className="action-roll">
+					<div>Roll dice</div>
+					<div>
+						<button disabled={!canRoll1Dice} onClick={() => props.moves.roll(1)}>one dice</button>
+						<button disabled={!canRoll2Dice} onClick={() => props.moves.roll(2)}>two dice</button>
+					</div>
+				</div>
+				<div className="action-distribute">
+					<div>Distribute</div>
+					<button disabled={!canDistributeCoins} onClick={() => props.moves.distributeCoins()}>Distribute coins</button>
+				</div>
+				<div className="action-swap">
+					<div>Swap a card</div>
+					<div>TODO</div>
+				</div>
+				<div className="action-take-coins">
+					<div>Take coins from one player</div>
+					<div>
+						<SelectOpponent players={props.G.players} ctx={props.ctx} onSelected={(playerId) => props.moves.takeCoinsFromPlayer(playerId)} enabled={canTakeCoinsFromOnePlayer}/>
+					</div>
+				</div>
+				<div className="action-take-coins">
+					<div>Take coins from everyone</div>
+					<div>
+						<SelectOpponent players={props.G.players} ctx={props.ctx} onSelected={(playerId) => props.moves.takeCoinsFromAllPlayers(playerId)} enabled={canTakeCoinsFromAllPlayers}/>
+					</div>
+				</div>
+				<div className="action-buy-card">
+					<div>Buy a card</div>
+					<div>TODO</div>
+				</div>
+				<div className="action-restart-turn">
+					<div>Restart turn</div>
+					<div><button disabled={!canRestartTurn} onClick={() => props.moves.restartTurn()}>Restart</button></div>
+				</div>
+				<div className="action-end-turn">
+					<div>End my turn</div>
+					<button disabled={!canEndTurn} onClick={() => props.events.endTurn()}>End it</button>
+				</div>
+			</div>
 		</div>
+
+		{rolled}
+
+		<div>{props.G.currentTurn.changeLog.map((event, idx) => <Event
+			key={`changelog-entry-${idx}`} {...event}/>)}</div>
 	</div>);
 };
 
-const Dice = (props) => {
-	return props.values.map((value, idx) => <span key={`dice-${idx}`}
-												  style={{marginLeft: '1em', marginRight: '1em'}}>{value}</span>)
+class SelectOpponent extends React.Component {
+
+	state = {isMenuOpen: false};
+
+	toggle() {
+		this.setState({...this.state, isMenuOpen: !this.state.isMenuOpen});
+	}
+
+	close() {
+		this.setState({...this.state, isMenuOpen: false});
+	}
+
+	callback(playerId) {
+		this.props.onSelected(playerId);
+	}
+
+	render() {
+		const menuOptions = {
+			isOpen: this.state.isMenuOpen,
+			close: () => this.close(),
+			toggle: <button disabled={!this.props.enabled} type="button" onClick={() => this.toggle()}>Select an opponent</button>,
+			align: 'center',
+		};
+
+		return (
+			<DropdownMenu {...menuOptions}>
+				{this.props.players
+					.map((player, id) => ({
+						player, id
+					}))
+					.filter(({id}) => Number(id) !== Number(this.props.ctx.currentPlayer))
+					.map(({player, id}) => <li key={`select-opponent-${id}`} onClick={() => this.callback(id)}>Player {id} {this.props.players[id].coins}</li>)}
+			</DropdownMenu>
+		);
+	}
 };
 
 const hasControl = (props) => {
@@ -118,16 +186,10 @@ const isSpectator = (props) => {
 	return _.isNaN(playerID) || playerID < 0 || playerID >= props.ctx.numPlayers;
 };
 
-const showRollButton = (props) => {
-	return hasControl(props) && playerCanRoll(props.G.currentTurn.numRolls, props.G.players[props.ctx.currentPlayer], props.G.currentTurn.hasDistributedCoins);
-};
-
-const showRoll2Button = (props) => {
-	return showRollButton(props) && playerCanRollWith2Dice(props.G.players[props.ctx.currentPlayer]);
-};
-
-const playerCanRoll = (currentNumRolls, player, redCardsPlayed) => {
-	return !redCardsPlayed && (currentNumRolls < allowedNumberOfRolls(player));
+const canRollWithDice = (props, numberOfDice) => {
+	let player = props.G.players[props.ctx.currentPlayer];
+	return hasControl(props) && !props.G.currentTurn.hasDistributedCoins && (props.G.currentTurn.numRolls < allowedNumberOfRolls(player))
+		&& numberOfDice <= (playerCanRollWith2Dice(player) ? 2 : 1);
 };
 
 const Deck = (props) => (
@@ -142,8 +204,8 @@ const Deck = (props) => (
 						key,
 						props.currentPlayer,
 						props.currentPlayer.coins >= Cards[key].cost // can afford
-							&& (_.isNil(playerCard) || _.isUndefined(Cards[playerCard.card].maxOwnCount)) // does not own, or owns and can own multiple
-							&& props.onBuy);
+						&& (_.isNil(playerCard) || _.isUndefined(Cards[playerCard.card].maxOwnCount)) // does not own, or owns and can own multiple
+						&& props.onBuy);
 					return (<Card key={key} type={key} menuItems={menuItems}/>)
 				})
 		}</div>
@@ -154,7 +216,7 @@ const Player = (props) => {
 	let player = props.G.players[props.name];
 	return (
 		<div style={{textAlign: 'center'}}>
-			<h2>Player {props.name} (Coins: {player.coins}) {props.takeCoins && props.name !== props.ctx.currentPlayer && <button onClick={() => props.takeCoins(props.name)}>Take coins (max 6)</button>}</h2>
+			<h2>Player {props.name} (Coins: {player.coins})</h2>
 			<div>{
 				player.deck.map((playerCard, idx) => {
 					let key = playerCardKey(props.name, playerCard.card, idx);

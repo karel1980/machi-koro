@@ -12,7 +12,7 @@ import _ from 'lodash';
 import update from 'immutability-helper';
 
 export const initialPlayer = () => ({
-	coins: 300,
+	coins: 3,
 	deck: initialPlayerDeck()
 });
 
@@ -59,7 +59,7 @@ const MachiKoro = Game({
 			initialPlayer()
 		],
 		currentTurn: newTurn(),
-		forceRoll: [6]
+		// forceRoll: [3, 3]
 	}),
 
 	moves: {
@@ -68,7 +68,8 @@ const MachiKoro = Game({
 		buyCard: buyCardMove,
 		swapCards: playSwapCardsMove,
 		restartTurn: restartTurnMove,
-		takeCoinsFromPlayer: takeCoinsFromPlayerMove
+		takeCoinsFromPlayer: takeCoinsFromPlayerMove,
+		takeCoinsFromAllPlayers: takeCoinsFromAllPlayersMove
 	},
 
 	flow: {
@@ -294,7 +295,8 @@ const appendChangeLog = (turn, entries) => ({
 export function distributeCoinsForBlueCards(G) {
 	let transfersPerPlayer = G.players.map((player, playerIdx) => {
 		return getActiveCards(player.deck, G.currentTurn.lastRoll).filter(cardType => Cards[cardType].category === 'blue')
-			.map(cardType => coinsTransferred(null, playerIdx, cardType, Cards[cardType].payout))});
+			.map(cardType => coinsTransferred(null, playerIdx, cardType, Cards[cardType].payout))
+	});
 	let currentTurn = appendChangeLog(G.currentTurn, _.flatten(transfersPerPlayer));
 	let players = _.zipWith(G.players, transfersPerPlayer, (player, transfers) => ({
 		...player,
@@ -426,13 +428,13 @@ function playerCardWithType(cardType) {
 }
 
 export function takeCoinsFromPlayerMove(G, ctx, opponentId) {
-	if (G.currentTurn.hasTakenFromPlayer) {
-		// can take only once
+	if (!G.currentTurn.hasDistributedCoins) {
+		// play red,blue,green cards first
 		return G;
 	}
 
-	if (!G.currentTurn.hasDistributedCoins) {
-		// play red,blue,green cards first
+	if (G.currentTurn.hasTakenFromPlayer) {
+		// can take only once
 		return G;
 	}
 
@@ -442,7 +444,7 @@ export function takeCoinsFromPlayerMove(G, ctx, opponentId) {
 		return G;
 	}
 
-	if (ctx.currentPlayer === Number(opponentId)) {
+	if (Number(ctx.currentPlayer) === Number(opponentId)) {
 		// pointless move
 		return G;
 	}
@@ -461,6 +463,44 @@ export function takeCoinsFromPlayerMove(G, ctx, opponentId) {
 	players[Number(opponentId)] = opponent;
 
 	return {...G, players, currentTurn: appendChangeLog({...G.currentTurn, hasTakenFromPlayer: true}, [transfer])};
+}
+
+export function takeCoinsFromAllPlayersMove(G, ctx) {
+	if (!G.currentTurn.hasDistributedCoins) {
+		// play red,blue,green cards first
+		return G;
+	}
+
+	if (G.currentTurn.hasTakenFromAllPlayers) {
+		// can take only once
+		return G;
+	}
+
+	let takeCard = G.currentTurn.activeCards.find(cardType => Cards[cardType].payoutFromEveryone);
+	if (_.isNil(takeCard)) {
+		return G;
+	}
+
+	let transfers = G.players
+		.map((player, idx) => ({ player, idx }))
+		.filter(({player, idx}) => idx !== Number(ctx.currentPlayer))
+		.map(({player, idx}) => coinsTransferred(idx, ctx.currentPlayer, takeCard, Math.min(Cards[takeCard].payout, player.coins)));
+
+	let players = [...G.players];
+
+	// TODO: extract function to apply transfers
+	transfers.forEach(transfer => {
+		players[transfer.to] = {
+			...players[transfer.to],
+			coins: players[transfer.to].coins + transfer.amount
+		};
+		players[transfer.from ] = {
+			...players[transfer.from],
+			coins: players[transfer.from].coins - transfer.amount
+		};
+	});
+
+	return {...G, players, currentTurn: {...G.currentTurn, transfers, hasTakenFromAllPlayers: true }};
 }
 
 export function restartTurnMove(G) {

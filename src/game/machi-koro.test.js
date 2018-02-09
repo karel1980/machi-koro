@@ -7,7 +7,8 @@ import {
 	playRollMove,
 	playSwapCardsMove,
 	restartTurnMove,
-	takeCoinsFromPlayerMove
+	takeCoinsFromPlayerMove,
+	takeCoinsFromAllPlayersMove
 } from './machi-koro';
 
 describe('machi-koro', () => {
@@ -481,6 +482,48 @@ describe('machi-koro', () => {
 			expect(G.players[2].coins).toEqual(3);
 			expect(G.currentTurn.changeLog).toEqual([{"amount": 3, "augmentingCards": undefined, "cardType": "tvstation", "from": 0, "to": 1, "type": "coinsTransferred"}]);
 		});
+	});
+
+	describe('takeConsFromAllPlayers', () => {
+		it('allows taking coins from all players', () => {
+			let G = { players: [initialPlayer(), initialPlayer(), initialPlayer()], forceRoll: [6], currentTurn: { numRolls: 0 , hasDistributedCoins: true, changeLog: []}};
+			let ctx = { currentPlayer: 0 };
+			G = giveCardToPlayer(G, 'stadion', 0);
+			G = playRollMove(G, ctx);
+
+			G = takeCoinsFromAllPlayersMove(G, ctx, 1, 'stadion');
+
+			expect(G.players[0].coins).toEqual(7);
+			expect(G.players[1].coins).toEqual(1);
+			expect(G.players[2].coins).toEqual(1);
+		});
+
+		it('does not take coins if coins are not distributed', () => {
+			let G = { players: [initialPlayer(), initialPlayer(), initialPlayer()], forceRoll: [6], currentTurn: { numRolls: 0 , hasDistributedCoins: false, changeLog: []}};
+			let ctx = { currentPlayer: 0 };
+			G = giveCardToPlayer(G, 'stadion', 0);
+			G = playRollMove(G, ctx);
+
+			G = takeCoinsFromAllPlayersMove(G, ctx, 1, 'stadion');
+
+			expect(G.players[0].coins).toEqual(3);
+			expect(G.players[1].coins).toEqual(3);
+			expect(G.players[2].coins).toEqual(3);
+		});
+
+		it('does not take coins twice', () => {
+			let G = { players: [initialPlayer(), initialPlayer(), initialPlayer()], forceRoll: [6], currentTurn: { numRolls: 0 , hasDistributedCoins: true, changeLog: []}};
+			let ctx = { currentPlayer: 0 };
+			G = giveCardToPlayer(G, 'stadion', 0);
+			G = playRollMove(G, ctx);
+
+			G = takeCoinsFromAllPlayersMove(G, ctx, 1, 'stadion');
+			G = takeCoinsFromAllPlayersMove(G, ctx, 1, 'stadion');
+
+			expect(G.players[0].coins).toEqual(7);
+			expect(G.players[1].coins).toEqual(1);
+			expect(G.players[2].coins).toEqual(1);
+		})
 	});
 
 	const giveCardToPlayer = (G, cardType, playerId) => {

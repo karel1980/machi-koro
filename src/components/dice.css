@@ -1,0 +1,179 @@
+
+.dice {
+	display: block;
+}
+
+.die {
+	width: 50px;
+	height: 50px;
+	border: none;
+	margin: 16px;
+	display: inline-block;
+	transform-style: preserve-3d;
+}
+
+.die-active {
+	animation: flip 3s infinite ease-out;
+}
+
+@keyframes flip {
+	0% {
+		transform: rotate3d(1,1,1,0deg)
+	}
+	100% {
+		transform: rotate3d(-1,1,0,720deg)
+	}
+}
+
+.die-sides {
+	animation-name: rotate;
+	animation-play-state: running;
+	animation-iteration-count: 3;
+	animation-timing-function: steps(60);
+	animation-duration: 2s;
+	transition: transform 1s ease-in-out;
+}
+
+.die-sides.die-value-1 {
+	transform-style: preserve-3d;
+	transition: transform 1s;
+	transform-origin: 50% 50%;
+	transform: rotate3d(0, 0, 1, 0deg);
+	animation-name: none;
+}
+
+.die-sides.die-value-2 {
+	background: #f0f;
+	transform-style: preserve-3d;
+	transition: transform 1s;
+	transform-origin: 25px 25px;
+	transform: rotate3d(0, 1, 0, -90deg);
+	animation-name: none;
+}
+
+.die-sides.die-value-3 {
+	background: #f0f;
+	transform-style: preserve-3d;
+	transition: transform 1s;
+	transform-origin: 25px 25px;
+	transform: rotate3d(1, 0, 0, 90deg);
+	animation-name: none;
+}
+
+.die-sides.die-value-4 {
+	background: #f0f;
+	transform-style: preserve-3d;
+	transition: transform 1s;
+	transform-origin: 25px 25px;
+	transform: rotate3d(1, 0, 0, 270deg);
+	animation-name: none;
+}
+
+.die-sides.die-value-5 {
+	background: #f0f;
+	transform-style: preserve-3d;
+	transition: transform 1s;
+	transform-origin: 25px 25px;
+	transform: rotate3d(0, 1, 0, 90deg);
+	animation-name: none;
+}
+
+.die-sides.die-value-6 {
+	transform-style: preserve-3d;
+	transition: transform 1s;
+	transform-origin: 25px 25px;
+	transform: rotate3d(0, 1, 0, 180deg);
+	animation-name: none;
+}
+
+@keyframes rotate {
+	0% {
+		transform-style: preserve-3d;
+		transform-origin: 25px 25px;
+		transform: rotate3d(0, 0, 0, 0.0deg);
+	}
+	100% {
+		transform-style: preserve-3d;
+		transform-origin: 25px 25px;
+		transform: rotate3d(0.51, 0.2, 0.1, 720.0deg);
+	}
+}
+
+.side {
+	background: #fff;
+	box-shadow:inset 0 0 10px #333;
+	border-radius: 4px;
+	width: 50px;
+	position: absolute;
+	height: 50px;
+	display: grid;
+	grid: 12px 1fr 3px 1fr 3px 1fr 12px/ 12px 1fr 3px 1fr 3px 1fr 12px;
+	padding: 0px;
+	backface-visibility: hidden;
+	grid-template-areas:
+			". .  . .  . .  ."
+			". tl . .  . tr ."
+			". .  . .  . .  ."
+			". le . ce . ri ."
+			". .  . .  . .  ."
+			". bl . .  . br ."
+			". .  . .  . .  ."
+}
+
+.side-one {
+	transform: translate3d(0px, 0px, 25px);
+}
+
+.side-two {
+	transform: translate3d(25px, 0px, 0px) rotate3d(0, 1, 0, 90deg);
+}
+
+.side-three {
+	transform: translate3d(0px, 25px, 0px) rotate3d(1, 0, 0, -90deg);
+}
+
+.side-four {
+	transform: translate3d(0px, -25px, 0px) rotate3d(1, 0, 0, 90deg);
+}
+
+.side-five {
+	transform: translate3d(-25px, 0px, 0px) rotate3d(0, 1, 0, 270deg);
+}
+
+.side-six {
+	transform: translate3d(0px, 0px, -25px) rotate3d(0, 1, 0, 180deg);
+}
+
+.dot {
+	border-radius: 999px;
+	background: #444;
+	box-shadow: inset 2px 0 5px #000;
+}
+
+.dot.center {
+	grid-area: ce;
+}
+
+.dot.topleft {
+	grid-area: tl;
+}
+
+.dot.left {
+	grid-area: le;
+}
+
+.dot.bottomleft {
+	grid-area: bl;
+}
+
+.dot.topright {
+	grid-area: tr;
+}
+
+.dot.right {
+	grid-area: ri;
+}
+
+.dot.bottomright {
+	grid-area: br;
+}

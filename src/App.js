@@ -33,6 +33,9 @@ const Hello = () => <div>
 	<h2>Play test game</h2>
 	<li><a href="#/game/multi/test/0">Play as player 0</a></li>
 	<li><a href="#/game/multi/test/1">Play as player 1</a></li>
+
+	<h2>Development area</h2>
+	<li><a href="#/dicetest">Dice test</a></li>
 </div>;
 
 const RoutedSingleClientApp = withRouter(() => {
@@ -45,7 +48,6 @@ const RoutedMultiClientApp = withRouter(({match}) => {
 
 const App = () => (
 	<div>
-		<h1 id="title">Machi Koro</h1>
 		<Router>
 			<div>
 				<Route key={'index'}

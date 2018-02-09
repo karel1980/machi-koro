@@ -11,3 +11,39 @@
 	background: #eee;
 	padding: 2em;
 }
+
+.actions {
+	display: grid;
+	grid-template-columns: repeat(6, fr);
+	grid-template-rows: repeat(3, fr);
+	grid-template-areas:
+		"roll roll roll  distribute distribute distribute"
+	    "swap swap swap  take take take"
+	    "buy buy restart restart end end";
+}
+
+.actions > div {
+	border: 1px solid darkgrey;
+}
+
+.action-roll {
+	grid-area: roll;
+}
+.action-distribute {
+	grid-area: distribute;
+}
+.action-swap {
+	grid-area: swap;
+}
+.action-take-coins {
+	grid-area: take;
+}
+.action-buy-card {
+	grid-area: buy;
+}
+.action-restart-turn {
+	grid-area: restart;
+}
+.action-end-turn {
+	grid-area: end;
+}
