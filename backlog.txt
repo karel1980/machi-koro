@@ -24,31 +24,19 @@ VI Guide user through different phases in turn
 VI Alert player card cannot be bought if not enough coins left (don't show buy button)
 VI Only enable buy menu if can be bought
 GR Yellow card: play another round (having rolled a double)
-
---- to implement in UI:
 GR Purple cards (swap card with opponent)
 GR Purple cards (point to opponent who has to pay)
----
-
-# todo
-
-## Game rules
-
-GR Yellow card: play another round (having rolled a double)
-
-## Visuals
-
 VI Nicer dice
 VI Center deck: sort on roll value, then on price
 VI Player cards: sort on roll value, then on price
-VI Cards smaller, zoom for details
-VI Group cards & render multiple cards with dropshadow
-VI Deck on the right, players on the left in 2 rows
 VI Don't show 'buy' button on cards which are sold out
 VI Don't show 'buy' button on cards with maxOwnCount already reached
+GR Yellow card: play another round (having rolled a double)
+
+# todo
+
+## Visuals
+
+VI Group cards & render multiple cards with dropshadow + card count
 VI show history of coin transfer throughout game (amount + reason)
 
-## Technical improvements
-
-TI Lose distinction between categories (colors), always set flags expression the effect
-TI Lose distinction between regular buy-from-the-deck cards and cards which start 'disabled' in player deck

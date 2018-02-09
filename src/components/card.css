@@ -5,16 +5,24 @@ body {
 
 .card {
 	background: #eee;
-	width: 120px;
-	height: 200px;
+	width: 180px;
+	height: 240px;
 	display: inline-flex;
 	position: relative;
-	margin: 5px;
-	padding: 1em;
+	margin: 2px;
+	padding: 0;
 	animation: shrink 500ms;
 	animation-fill-mode: forwards;
-	font-size: 0.5em;
-	z-index: 50
+	z-index: 50;
+	display: inline-grid;
+	grid-template-rows: 1fr 1fr 1fr 4fr 3em;
+	grid-template-columns: 1fr 3fr 1fr;
+	grid-template-areas:
+		". roll count"
+	    "label label label"
+	    "menu menu menu"
+	    "description description description"
+	    "cost . .";
 }
 
 .card-symbol {
@@ -74,29 +82,34 @@ body {
 	background: orangered;
 }
 
-.card-top {
-}
-
-.card-bottom {
-	position: absolute;
-	bottom: 0px;
-}
-
 .roll {
+	padding: 5px;
 	text-align: center;
+	grid-area: roll;
+}
+
+.count {
+	background: #eee;
+	padding: 5px;
+	text-align: right;
+	grid-area: count;
 }
 
 .label {
 	text-align: center;
-	margin-top: 1em;
 	vertical-align: middle;
+	grid-area: label;
+}
+
+.menu {
+	grid-area: menu;
 }
 
 .description {
-	margin-top: 5em;
 	text-align: center;
+	grid-area: description;
 }
 
 .cost {
-	margin-bottom: 1em;
+	grid-area: cost;
 }

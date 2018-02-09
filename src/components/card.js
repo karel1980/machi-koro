@@ -18,7 +18,8 @@ export class Card extends React.Component {
 			let menuOptions = {
 				isOpen: true,
 				toggle: '',
-				close: () => {},
+				close: () => {
+				},
 				align: 'center'
 			};
 
@@ -29,20 +30,17 @@ export class Card extends React.Component {
 
 		return (
 			<div className={cardClassNames(card, enabled, hasMenu, count)}>
-				<div className="card-top">
-					<div className="roll">{rollDisplayString(card.roll)}</div>
-					<div className="label">
-						<CardSymbol symbol={card.symbol}/>
-						{card.name}
-					</div>
-					<div style={{margin: 'auto', textAlign: 'center'}}>
-						{menu}
-					</div>
-					<div className="description">{card.description}</div>
+				<div className="roll">{rollDisplayString(card.roll)}</div>
+				{count !== undefined && count > 1 && <div className="count">x {count}</div>}
+				<div className="label">
+					<CardSymbol symbol={card.symbol}/>
+					{card.name}
 				</div>
-				<div className="card-bottom">
-					<div className="cost"><SingleCoin value={costDisplayString(card.cost, free)}/></div>
+				<div className="menu">
+					{menu}
 				</div>
+				<div className="description">{card.description}</div>
+				<div className="cost"><SingleCoin value={costDisplayString(card.cost, free)}/></div>
 			</div>
 		);
 	}
