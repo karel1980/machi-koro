@@ -1,5 +1,5 @@
 GR = Game rules
-VI = Visuals
+UI = User interface
 DE = Deployment
 
 # done
@@ -9,7 +9,7 @@ GR I can roll dice
 GR Payout from red cards
 GR Play from blue cards
 GR Payout from blue cards (no 'increase [symbol]' modifiers)
-VI Show symbols on cards
+UI Show symbols on cards
 GR Green cards (collect x when rolled)
 GR Green cards (increment value of other cards)
 GR I can buy cards from the deck
@@ -20,20 +20,22 @@ GR purple cards can be bought only once
 GR Yellow card: throw with 2 dice
 GR Yellow card: throw again
 GR implement 'increment all [symbol] cards'
-VI disable roll buttons when appropriate (phase of turn & 2 dice allowed)
-VI Guide user through different phases in turn
-VI Alert player card cannot be bought if not enough coins left (don't show buy button)
-VI Only enable buy menu if can be bought
+UI disable roll buttons when appropriate (phase of turn & 2 dice allowed)
+UI Guide user through different phases in turn
+UI Alert player card cannot be bought if not enough coins left (don't show buy button)
+UI Only enable buy menu if can be bought
 GR Yellow card: play another round (having rolled a double)
 GR Purple cards (swap card with opponent)
 GR Purple cards (point to opponent who has to pay)
-VI Nicer dice
-VI Center deck: sort on roll value, then on price
-VI Player cards: sort on roll value, then on price
-VI Don't show 'buy' button on cards which are sold out
-VI Don't show 'buy' button on cards with maxOwnCount already reached
+UI Nicer dice
+UI Center deck: sort on roll value, then on price
+UI Player cards: sort on roll value, then on price
+UI Don't show 'buy' button on cards which are sold out
+UI Don't show 'buy' button on cards with maxOwnCount already reached
 GR Yellow card: play another round (having rolled a double)
-VI Group cards & render multiple cards with dropshadow + card count
+UI Group cards & render multiple cards with dropshadow + card count
+UI render [symbol] in description using an image
+UI clean up symbol images, fix alignment
 
 # todo
 
@@ -41,9 +43,7 @@ VI Group cards & render multiple cards with dropshadow + card count
 
 DE = Deploy single-player to kare1980.github.io/machi-koro
 
-## Visuals
+## User interface
 
-VI clean up symbol images, fix alignment
-VI render [symbol] in description using an image
-VI show history of coin transfer throughout game (amount + reason)
-VI i18n
+UI show history of coin transfer throughout game (amount + reason)
+UI i18n

@@ -39,14 +39,14 @@ export class Card extends React.Component {
 				<div className="menu">
 					{menu}
 				</div>
-				<div className="description">{card.description}</div>
+				<div className="description"><CardDescription description={card.description}/></div>
 				<div className="cost"><SingleCoin value={costDisplayString(card.cost, free)}/></div>
 			</div>
 		);
 	}
 }
 
-const CardSymbol = (props) => (<img className="card-symbol" alt={props.symbol} src={`/assets/${props.symbol}.png`}/>);
+const CardSymbol = (props) => (<img className="card-symbol" alt={props.symbol} src={`/assets/${props.symbol}.svg`}/>);
 
 const rollDisplayString = value => value === undefined ? (<span>&nbsp;</span>) : value;
 
@@ -57,4 +57,13 @@ const cardClassNames = (card, enabled, highlight, count) => {
 	let highlightClass = highlight ? 'highlight' : '';
 	let multiple = count > 1 ? 'multiple' : '';
 	return `card card-${suffix} ${highlightClass} ${multiple}`;
+};
+
+const CardDescription = (props) => {
+	let parts = props.description.split(/(\[[^\]]*\])/);
+
+	return parts.map(part => {
+		let match = part.match(/\[(.*)\]/);
+		return match ? <CardSymbol symbol={match[1]}/> : part;
+	});
 };

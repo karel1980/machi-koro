@@ -27,6 +27,8 @@ body {
 
 .card-symbol {
 	vertical-align: middle;
+	margin: 0 3px;
+	height: 24px;
 }
 
 .card.highlight {

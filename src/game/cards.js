@@ -25,7 +25,7 @@ export const Cards = {
 		"cost": 10,
 		"name": "Winkelcentrum",
 		"category": "yellow",
-		"description": "Verhoog het aantal munten dat je voor je [koffie] en [huisje] kaarten krijgt met 1.",
+		"description": "Verhoog het aantal munten dat je voor je [coffee] en [house] kaarten krijgt met 1.",
 		"maxOwnCount": 1,
 		"paymentIncreaseBy": 1,
 		"paymentIncreaseForSymbols": ["coffee", "house"]
@@ -79,7 +79,7 @@ export const Cards = {
 		"cost": 2,
 		"name": "Groente- en fruitmarkt",
 		"category": "green",
-		"description": "Ontvang 3 munten van de bank voor elke [graan] kaart die je bezit als het jouw beurt is.",
+		"description": "Ontvang 3 munten van de bank voor elke [wheat] kaart die je bezit als het jouw beurt is.",
 		"roll": "11 - 12",
 		"symbol": "apple",
 		"payout": 3,
@@ -132,7 +132,7 @@ export const Cards = {
 		"payout": 3
 	},
 	"kaasfabriek": {
-		"description": "Ontvang 3 munten van de bank voor elke [koe] kaart die je bezit als het jouw beurt is.",
+		"description": "Ontvang 3 munten van de bank voor elke [cattle] kaart die je bezit als het jouw beurt is.",
 		"name": "Kaasfabriek",
 		"category": "green",
 		"cost": 5,
