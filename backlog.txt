@@ -1,5 +1,6 @@
 GR = Game rules
 VI = Visuals
+DE = Deployment
 
 # done
 
@@ -32,11 +33,17 @@ VI Player cards: sort on roll value, then on price
 VI Don't show 'buy' button on cards which are sold out
 VI Don't show 'buy' button on cards with maxOwnCount already reached
 GR Yellow card: play another round (having rolled a double)
+VI Group cards & render multiple cards with dropshadow + card count
 
 # todo
 
+## Deployment
+
+DE = Deploy single-player to kare1980.github.io/machi-koro
+
 ## Visuals
 
-VI Group cards & render multiple cards with dropshadow + card count
+VI clean up symbol images, fix alignment
+VI render [symbol] in description using an image
 VI show history of coin transfer throughout game (amount + reason)
-
+VI i18n

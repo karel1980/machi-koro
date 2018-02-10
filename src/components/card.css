@@ -15,7 +15,7 @@ body {
 	animation-fill-mode: forwards;
 	z-index: 50;
 	display: inline-grid;
-	grid-template-rows: 1fr 1fr 1fr 4fr 3em;
+	grid-template-rows: 1fr 1fr 1fr 4fr 1fr;
 	grid-template-columns: 1fr 3fr 1fr;
 	grid-template-areas:
 		". roll count"
@@ -59,7 +59,7 @@ body {
 }
 
 .card.multiple {
-	box-shadow: 1em 1em 1em;
+	box-shadow: 2px 4px 2px #666;
 }
 
 .card.card-yellow {
@@ -86,6 +86,7 @@ body {
 	padding: 5px;
 	text-align: center;
 	grid-area: roll;
+	font-weight: bold;
 }
 
 .count {
@@ -96,6 +97,8 @@ body {
 }
 
 .label {
+	font-size: larger;
+	font-weight: bold;
 	text-align: center;
 	vertical-align: middle;
 	grid-area: label;
@@ -112,4 +115,8 @@ body {
 
 .cost {
 	grid-area: cost;
+	display: grid;
+	align-items: center;
+	justify-content: center;
+	padding: 3px;
 }

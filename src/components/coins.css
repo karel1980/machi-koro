@@ -1,28 +1,29 @@
 
 .coin-outer {
-	width: 2em;
-	height: 2em;
-	padding: 0.5em;
+	display: grid;
+	grid-template-areas: "thing";
+	grid-template-columns: 100%;
+	grid-template-rows: 100%;
 	background: gold;
-	border-radius: 3em;
-	text-align: center;
+	padding: 2px;
+	height: 1.5em;
+	width: 1.5em;
+	border-radius: 2em;
 	box-shadow: 2px 2px orange inset;
-	grid-template-columns: repeat(1fr, 3);
-	grid-template-rows: repeat(1fr, 3);
-	grid-template-areas:
-		". . ."
-		". x ."
-		". . ."
 }
 
+
 .coin-inner {
-	width: 1em;
-	height: 1em;
-	padding: 0.5em;
+	display: grid;
+	grid-area: thing;
 	background: gold;
-	border-radius: 3em;
-	text-align: center;
-	grid-area: x;
 	box-shadow: -2px -2px orange inset;
+	height: 100%;
 	color: saddlebrown;
+	border:1px solid silver;
+	align-items: center;
+	justify-content: center;
+	border-radius: 2em;
+	font-weight: bold;
 }
+
