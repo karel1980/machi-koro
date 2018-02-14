@@ -36,6 +36,7 @@ GR Yellow card: play another round (having rolled a double)
 UI Group cards & render multiple cards with dropshadow + card count
 UI render [symbol] in description using an image
 UI clean up symbol images, fix alignment
+UI show history of coin transfer throughout game (amount + reason)
 
 # todo
 
@@ -45,5 +46,4 @@ DE = Deploy single-player to kare1980.github.io/machi-koro
 
 ## User interface
 
-UI show history of coin transfer throughout game (amount + reason)
 UI i18n

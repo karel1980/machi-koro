@@ -27,6 +27,6 @@ I don't own any expansions. If you do, I would love to hear from you.
 
 # Development
 
-The electron setup sit currently botched.
+The electron setup is currently botched.
 To get started, run `npm run dev`. After a few seconds the game should open in your browser.
 

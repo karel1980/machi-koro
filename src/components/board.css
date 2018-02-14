@@ -47,3 +47,41 @@
 .action-end-turn {
 	grid-area: end;
 }
+
+.transfer {
+	display: grid;
+	grid-template-areas:
+		"card card card"
+		"from giving ."
+		"amount amount amount"
+		". receiving to";
+	border-bottom: 1px solid #333;
+}
+
+.transfer-card {
+	grid-area: card;
+	display: grid;
+	justify-content: center;
+}
+.transfer-from {
+	grid-area: from;
+}
+.transfer-giving {
+	grid-area: giving;
+	display: grid;
+	justify-content: center;
+}
+.transfer-amount {
+	grid-area: amount;
+	display: grid;
+	justify-content: center;
+}
+.transfer-receiving {
+	grid-area: receiving;
+	margin-top: 5px;
+	display: grid;
+	justify-content: center;
+}
+.transfer-to {
+	grid-area: to;
+}

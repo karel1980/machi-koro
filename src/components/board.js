@@ -7,6 +7,7 @@ import {allowedNumberOfRolls, playerCanRollWith2Dice} from "../game/machi-koro";
 import {Cards, compareRollAndCost} from '../game/cards';
 import {Dice} from "./dice";
 import {DropdownMenu} from "react-dd-menu";
+import {Coins} from "./coins";
 
 export class Board extends React.Component {
 
@@ -53,14 +54,33 @@ export class Board extends React.Component {
 	}
 }
 
-const Event = (props) => {
-	switch (props.type) {
+const Event = ({type, cardType, from, to, amount}) => {
+	switch (type) {
 		case 'coinsTransferred':
-			return <div>Player {props.to} received {props.amount} from {_.isNil(props.from) ? 'the bank' : `Player ${props.from}`} ({props.cardType})</div>;
+			return <div className="transfer">
+				<div className="transfer-card">
+					{cardType}
+				</div>
+				<div className="transfer-from">
+					{_.isNil(from) ? 'Bank' : `Player ${from}`}
+				</div>
+				<div className="transfer-giving">
+					<img width={50} src={'/assets/giving.svg'}/>
+				</div>
+				<div className="transfer-amount">
+					<Coins amount={amount}/>
+				</div>
+				<div className="transfer-receiving">
+					<img width={50} src={'/assets/receiving.svg'}/>
+				</div>
+				<div className="transfer-to">
+					Player {to}
+				</div>
+			</div>;
 		case 'coinsTransferStopped':
-			return <div>Player {props.from} is broke, cannot give coins to {props.to} ({props.cardType})</div>;
+			return <div>Player {from} is broke, cannot give coins to {to} ({cardType})</div>;
 		default:
-			return <div>Unknown event: {JSON.stringify(props)}</div>;
+			return <div>Unknown event: {JSON.stringify(arguments)}</div>;
 	}
 };
 
@@ -133,10 +153,14 @@ const Palette = (props) => {
 
 		{rolled}
 
-		<div>{props.G.currentTurn.changeLog.map((event, idx) => <Event
-			key={`changelog-entry-${idx}`} {...event}/>)}</div>
+		<ChangeLog G={props.G} changeLog={props.changeLog}/>
 	</div>);
 };
+
+const ChangeLog = (props) => (
+	<div>{props.G.currentTurn.changeLog.map((event, idx) => <Event
+		key={`changelog-entry-${idx}`} {...event}/>)}</div>
+);
 
 class SelectOpponent extends React.Component {
 

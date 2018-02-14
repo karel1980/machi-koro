@@ -1,6 +1,6 @@
 import {compareRoll, compareRollAndCost} from './cards';
 
-fdescribe('cards', () => {
+describe('cards', () => {
 	describe('compareRoll', () => {
 		describe('comparing identical values', () => {
 			it('returns 0 for identical cards, with single value', () => {
